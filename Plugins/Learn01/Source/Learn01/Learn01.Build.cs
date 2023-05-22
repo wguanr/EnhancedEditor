@@ -28,6 +28,7 @@ public class Learn01 : ModuleRules
 			{
 				"Core",
 				"Blutility",
+			
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -41,6 +42,10 @@ public class Learn01 : ModuleRules
 				"Slate",
 				"SlateCore", 
 				"EditorScriptingUtilities",
+				"Niagara",
+				"UMG",
+				"UnrealEd",
+				"AssetTools",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
