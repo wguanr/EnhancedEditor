@@ -7,7 +7,7 @@
 #include "EditorAssetLibrary.h"
 #include "EditorUtilityLibrary.h"
 #include "ObjectTools.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 
 void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
