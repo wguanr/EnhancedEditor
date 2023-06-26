@@ -19,19 +19,16 @@ namespace DebugHeader
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
 	}
 
-	static EAppReturnType::Type ShowMessageDialog(EAppMsgType::Type MessageType,const FString& Message, bool bShowCancelButton = true)
+	static EAppReturnType::Type ShowMessageDialog(EAppMsgType::Type MessageType, const FString& Message,
+	                                              bool bShowCancelButton = true)
 	{
 		if (bShowCancelButton)
 		{
 			FText MessageTitle = FText::FromString(TEXT("Warning"));
-		
+
 			return FMessageDialog::Open(MessageType, FText::FromString(Message), &MessageTitle);
 		}
-		else
-		{
-			return FMessageDialog::Open(MessageType, FText::FromString(Message));
-		}
-	
+		return FMessageDialog::Open(MessageType, FText::FromString(Message));
 	}
 
 	static void ShowNotifyInfo(const FString& Message)
@@ -41,8 +38,6 @@ namespace DebugHeader
 		Info.bUseLargeFont = true;
 		Info.FadeInDuration = 8.f;
 
-		FSlateNotificationManager::Get().AddNotification(Info) -> SetCompletionState(SNotificationItem::CS_Success);
-	
+		FSlateNotificationManager::Get().AddNotification(Info)->SetCompletionState(SNotificationItem::CS_Success);
 	}
-
 }
