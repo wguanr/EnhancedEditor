@@ -1,0 +1,34 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\ue_project\\enhancededitor\\plugins\\learn01\\source\\learn01\\private\\learn01.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\ue_project\\enhancededitor\\intermediate\\build\\win64\\enhancededitoreditor\\development\\unrealed\\sharedpch.unrealed.shadowerrors.h.pch",
+        "Includes": [
+            "d:\\ue_project\\enhancededitor\\plugins\\learn01\\intermediate\\build\\win64\\unrealeditor\\development\\learn01\\definitions.learn01.h",
+            "d:\\ue_project\\enhancededitor\\plugins\\learn01\\source\\learn01\\public\\learn01.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowser\\public\\contentbrowsermodule.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowser\\public\\contentbrowserdelegates.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\developer\\assettools\\public\\iassettypeactions.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\developer\\merge\\public\\merge.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\unrealed\\classes\\thumbnailrendering\\thumbnailmanager.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\unrealed\\classes\\thumbnailrendering\\thumbnailrenderer.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\unrealed\\uht\\thumbnailrenderer.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\unrealed\\uht\\thumbnailmanager.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\assettools\\uht\\iassettypeactions.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowserdata\\public\\contentbrowserdatalegacybridge.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowserdata\\public\\contentbrowserdatamenucontexts.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowserdata\\public\\contentbrowseritem.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\contentbrowserdata\\public\\contentbrowseritemdata.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\contentbrowserdata\\uht\\contentbrowseritem.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\developer\\collectionmanager\\public\\collectionmanagertypes.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\developer\\sourcecontrol\\public\\isourcecontrolstate.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\contentbrowserdata\\uht\\contentbrowserdatamenucontexts.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\contentbrowserdata\\uht\\contentbrowserdatalegacybridge.generated.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\unrealed\\public\\mrufavoriteslist.h",
+            "c:\\program files\\epic games\\ue_5.1\\engine\\source\\editor\\unrealed\\public\\mrulist.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

@@ -1,0 +1,12 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.Learn01.cpp.obj": [
+			"Learn01.init.gen.cpp.obj",
+			"QuickAssetAction.gen.cpp.obj",
+			"Learn01.cpp.obj",
+			"QuickAssetAction.cpp.obj",
+			"AdvancDeletionWidget.cpp.obj"
+		]
+	}
+}
