@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceConstant.h"
-#include "Particles/ParticleSystem.h"	
+#include "Particles/ParticleSystem.h"
 #include "Sound/SoundCue.h"
 #include "Sound/SoundWave.h"
 #include "Engine/Texture.h"
@@ -26,6 +26,7 @@ UCLASS()
 class ENHANCEDEDITORMODV1_API UQuickAssetAction : public UAssetActionUtility
 {
 	GENERATED_BODY()
+
 public:
 	UFUNCTION(CallInEditor)
 	void DuplicateAssets(int32 NumOfDuplicates);
@@ -34,10 +35,11 @@ public:
 
 	UFUNCTION(CallInEditor)
 	void RemoveUnusedAssets();
+
 private:
-	TMap<UClass*,FString>PrefixMap =
+	TMap<UClass*, FString> PrefixMap =
 	{
-		
+
 		{UBlueprint::StaticClass(),TEXT("BP_")},
 		{UStaticMesh::StaticClass(),TEXT("SM_")},
 		{UMaterial::StaticClass(), TEXT("M_")},

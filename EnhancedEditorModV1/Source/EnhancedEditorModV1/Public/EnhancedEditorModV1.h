@@ -8,13 +8,11 @@
 class FEnhancedEditorModV1Module : public IModuleInterface
 {
 public:
-
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
 private:
-
 #pragma region ContentBrowserMenuEXtension
 
 	void IniCBMenuExtension();
@@ -34,7 +32,7 @@ private:
 #pragma endregion
 
 #pragma region CustomEditorTab
-	
+
 	void RegisterAdvanceDeletionTab();
 
 	TSharedRef<SDockTab> OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs);
@@ -47,5 +45,5 @@ public:
 
 	bool DeleteSingleAssetBySlate(const FAssetData& AssetDataToDelete);
 	bool DeleteMultipleAssetsBySlate(const TArray<FAssetData>& AssetsDataToDelete);
-#pragma endregion 
+#pragma endregion
 };
