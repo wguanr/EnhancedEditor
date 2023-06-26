@@ -1,0 +1,12 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-EnhancedEditorModV1.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"D:\UE_project\EnhancedEditor\Intermediate\Build\Win64\EnhancedEditorEditor\Development\UnrealEd\SharedPCH.UnrealEd.ShadowErrors.h.obj"
+"D:\UE_project\EnhancedEditor\Plugins\EnhancedEditorModV1\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedEditorModV1\Module.EnhancedEditorModV1.cpp.obj"
+"D:\UE_project\EnhancedEditor\Plugins\EnhancedEditorModV1\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedEditorModV1\Default.rc2.res"
+/OUT:"D:\UE_project\EnhancedEditor\Plugins\EnhancedEditorModV1\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedEditorModV1\UnrealEditor-EnhancedEditorModV1.lib"
