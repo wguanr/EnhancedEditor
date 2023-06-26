@@ -1,0 +1,12 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.EnhancedEditorModV1.cpp.obj": [
+			"EnhancedEditorModV1.init.gen.cpp.obj",
+			"QuickAssetAction.gen.cpp.obj",
+			"EnhancedEditorModV1.cpp.obj",
+			"QuickAssetAction.cpp.obj",
+			"AdvancDeletionWidget.cpp.obj"
+		]
+	}
+}
