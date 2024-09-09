@@ -262,8 +262,14 @@ void FEnhancedEditorModV1Module::FixupRedirectors()
 	// get class name : " ObjectRedirector" by 2 ways from 5.1
 	// "/Script/[ProjectName].[EnumName]"
 	// GetPathNameSafe(UClass::TryFindTypeSlow<UEnum>("EnumName"))
-	Filter.ClassPaths.AddUnique(FTopLevelAssetPath("/Script/CoreUObject.ObjectRedirector"));
-
+#if (ENGINE_MAJOR_VERSION >5) || (ENGINE_MAJOR_VERSION==5 && ENGINE_MINOR_VERSION>1)
+        Filter.ClassPaths.AddUnique(FTopLevelAssetPath("/Script/CoreUObject.ObjectRedirector"));
+	
+#else
+        // get the fiter path of redirectors
+        Filter.ClassNames.AddUnique("ObjectRedirector");
+#endif
+    
 	// the module reference the OutAssetData var to get the right assets
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>(
 		TEXT("AssetRegistry"));

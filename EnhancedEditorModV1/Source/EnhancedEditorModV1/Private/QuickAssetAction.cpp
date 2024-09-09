@@ -26,7 +26,12 @@ void UQuickAssetAction::DuplicateAssets(int32 NumOfDuplicates)
 	{
 		for (int32 i = 0; i < NumOfDuplicates; i++)
 		{
+#if (ENGINE_MAJOR_VERSION >5) || (ENGINE_MAJOR_VERSION==5 && ENGINE_MINOR_VERSION>1)
 			const FString SourceAssetPath = SelectAssetData.GetSoftObjectPath().ToString();
+#else
+		        const FString SourceAssetPath = SelectAssetData.ToSoftObjectPath().ToString();
+#endif
+		    
 			const FString NewDuplicatedName = SelectAssetData.AssetName.ToString() + TEXT("_") +
 				FString::FromInt(i + 1);
 			const FString NewPathName = FPaths::Combine(SelectAssetData.PackagePath.ToString(), NewDuplicatedName);
@@ -99,7 +104,12 @@ void UQuickAssetAction::RemoveUnusedAssets()
 	{
 		// remember to saved level and others first
 		TArray<FString> ReferencesForAsset = UEditorAssetLibrary::FindPackageReferencersForAsset(
+#if (ENGINE_MAJOR_VERSION >5) || (ENGINE_MAJOR_VERSION==5 && ENGINE_MINOR_VERSION>1)
 			AssetData.GetObjectPathString());
+#else
+			AssetData.ObjectPath.ToString());
+#endif
+	    
 
 		if (ReferencesForAsset.Num() == 0)
 		{
