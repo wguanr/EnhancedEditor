@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FEnhancedEditorModV1Module : public IModuleInterface
+class FEnhancedEditorModule : public IModuleInterface
 {
 public:
 	/** IModuleInterface implementation */

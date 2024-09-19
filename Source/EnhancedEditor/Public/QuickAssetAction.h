@@ -23,7 +23,7 @@
  * 
  */
 UCLASS()
-class ENHANCEDEDITORMODV1_API UQuickAssetAction : public UAssetActionUtility
+class ENHANCEDEDITOR_API UQuickAssetAction : public UAssetActionUtility
 {
 	GENERATED_BODY()
 

@@ -3,9 +3,9 @@
 using System.IO;
 using UnrealBuildTool;
 
-public class EnhancedEditorModV1 : ModuleRules
+public class EnhancedEditor : ModuleRules
 {
-	public EnhancedEditorModV1(ReadOnlyTargetRules Target) : base(Target)
+	public EnhancedEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
