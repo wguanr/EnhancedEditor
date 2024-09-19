@@ -2,7 +2,7 @@
 
 #include "Widgets/Layout/SScrollBox.h"
 #include "DebugHeader.h"
-#include "../../Public/EnhancedEditorModV1.h"
+#include "../../Public/EnhancedEditor.h"
 #include "ObjectTools.h"
 
 void SAdvanceDeletionTab::Construct(const FArguments& InArgs)

@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "../Public/EnhancedEditorModV1.h"
+#include "EnhancedEditor.h"
 #include "ContentBrowserModule.h"
 #include "DebugHeader.h"
 #include "EditorAssetLibrary.h"
@@ -11,15 +11,15 @@
 #include "EditorStyleSet.h"
 #include "Slate/AdvancDeletionWidget.h"
 
-#define LOCTEXT_NAMESPACE "FEnhancedEditorModV1Module"
+#define LOCTEXT_NAMESPACE "FEnhancedEditorModule"
 
-void FEnhancedEditorModV1Module::StartupModule()
+void FEnhancedEditorModule::StartupModule()
 {
 	IniCBMenuExtension();
 	RegisterAdvanceDeletionTab();
 }
 
-void FEnhancedEditorModV1Module::ShutdownModule()
+void FEnhancedEditorModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -27,7 +27,7 @@ void FEnhancedEditorModV1Module::ShutdownModule()
 
 #pragma region ContentBrowserMuneExtension
 
-void FEnhancedEditorModV1Module::IniCBMenuExtension()
+void FEnhancedEditorModule::IniCBMenuExtension()
 {
 	FContentBrowserModule& CBModule =
 		FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
@@ -38,15 +38,15 @@ void FEnhancedEditorModV1Module::IniCBMenuExtension()
 	// now we got an Delegate. then to add mem-func and params
 
 	// FContentBrowserMenuExtender_SelectedPaths CustomCBMenuDelegate;
-	// CustomCBMenuDelegate.BindRaw(this,&FEnhancedEditorModV1Module::CustomCBMenuExtender);
+	// CustomCBMenuDelegate.BindRaw(this,&FEnhancedEditorModule::CustomCBMenuExtender);
 	// CBMenuExtenders.Add(CustomCBMenuDelegate);
 	// above is equal to :
 
 	CBMenuExtenders.Add(
-		FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FEnhancedEditorModV1Module::CustomCBMenuExtender));
+		FContentBrowserMenuExtender_SelectedPaths::CreateRaw(this, &FEnhancedEditorModule::CustomCBMenuExtender));
 }
 
-TSharedRef<FExtender> FEnhancedEditorModV1Module::CustomCBMenuExtender(const TArray<FString>& SelectedPaths)
+TSharedRef<FExtender> FEnhancedEditorModule::CustomCBMenuExtender(const TArray<FString>& SelectedPaths)
 {
 	// return a smart pointer! the new word is usually used in a smart pointer!
 	// this function is accept Paths like Dirpath but not asset, it will automaticlly add entry to the mune
@@ -57,7 +57,7 @@ TSharedRef<FExtender> FEnhancedEditorModV1Module::CustomCBMenuExtender(const TAr
 		//, can find FName through Editor to check the "UI extension" in preference on!
 		MenuExtender->AddMenuExtension(FName("Delete"), EExtensionHook::After, TSharedPtr<FUICommandList>(),
 		                               FMenuExtensionDelegate::CreateRaw(
-			                               this, &FEnhancedEditorModV1Module::AddCustomMenuEntry));
+			                               this, &FEnhancedEditorModule::AddCustomMenuEntry));
 		FolderPathSelected = SelectedPaths;
 	}
 
@@ -65,25 +65,25 @@ TSharedRef<FExtender> FEnhancedEditorModV1Module::CustomCBMenuExtender(const TAr
 }
 
 // Binding 02: Defines the details
-void FEnhancedEditorModV1Module::AddCustomMenuEntry(FMenuBuilder& MenuBuilder)
+void FEnhancedEditorModule::AddCustomMenuEntry(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.AddMenuEntry
 	(
 		FText::FromString(TEXT("Clean Useless Shit")),
 		FText::FromString(TEXT("Safely delete all unused assets under folder,Delete Empty Folders")),
 		FSlateIcon(),
-		FExecuteAction::CreateRaw(this, &FEnhancedEditorModV1Module::OnCleanUselessShit)
+		FExecuteAction::CreateRaw(this, &FEnhancedEditorModule::OnCleanUselessShit)
 	);
 	MenuBuilder.AddMenuEntry
 	(
 		FText::FromString(TEXT("Advanecd Deletion")),
 		FText::FromString(TEXT("Custom Slate Pannel: Custom Slate Pannel")),
 		FSlateIcon(),
-		FExecuteAction::CreateRaw(this, &FEnhancedEditorModV1Module::OnOpenSlatePannel)
+		FExecuteAction::CreateRaw(this, &FEnhancedEditorModule::OnOpenSlatePannel)
 	);
 }
 
-void FEnhancedEditorModV1Module::OnCleanUselessShit()
+void FEnhancedEditorModule::OnCleanUselessShit()
 {
 	// OnDeleteUnusedAssetsButtonCliked();
 	// OnDeleteUnusedFoldersButtonCliked();
@@ -149,7 +149,7 @@ void FEnhancedEditorModV1Module::OnCleanUselessShit()
 
 
 // Binding 03: the real action------
-void FEnhancedEditorModV1Module::OnDeleteUnusedAssetsButtonCliked()
+void FEnhancedEditorModule::OnDeleteUnusedAssetsButtonCliked()
 {
 	// if the user give unexpected path ,then return the function.
 	if (FolderPathSelected.Num() > 1)
@@ -210,7 +210,7 @@ void FEnhancedEditorModV1Module::OnDeleteUnusedAssetsButtonCliked()
 	}
 }
 
-void FEnhancedEditorModV1Module::OnDeleteUnusedFoldersButtonCliked()
+void FEnhancedEditorModule::OnDeleteUnusedFoldersButtonCliked()
 {
 	FixupRedirectors();
 
@@ -246,12 +246,12 @@ void FEnhancedEditorModV1Module::OnDeleteUnusedFoldersButtonCliked()
 	DebugHeader::ShowNotifyInfo(TEXT("Succesfull to clear "+FString::FromInt(Counter)+" folders"));
 }
 
-void FEnhancedEditorModV1Module::OnOpenSlatePannel()
+void FEnhancedEditorModule::OnOpenSlatePannel()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(FName("AdvanceDeletion"));
 }
 
-void FEnhancedEditorModV1Module::FixupRedirectors()
+void FEnhancedEditorModule::FixupRedirectors()
 {
 	TArray<UObjectRedirector*> RedirectorsToFix;
 
@@ -296,22 +296,22 @@ void FEnhancedEditorModV1Module::FixupRedirectors()
 
 #pragma region CustomEditorTab
 
-void FEnhancedEditorModV1Module::RegisterAdvanceDeletionTab()
+void FEnhancedEditorModule::RegisterAdvanceDeletionTab()
 {
 	// what's the diffrence between LOCTEXT and FText?
 	// LOCTEXT is a macro that will be replaced by a FText object at compile time.
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvanceDeletion"),
 	                                                  FOnSpawnTab::CreateRaw(
 		                                                  this,
-		                                                  &FEnhancedEditorModV1Module::OnSpawnAdvancedDeletionTab))
+		                                                  &FEnhancedEditorModule::OnSpawnAdvancedDeletionTab))
 	                        .SetDisplayName(LOCTEXT("AdvancedDeletionTabTitle", "Advanced Deletion"))
 	                        .SetTooltipText(LOCTEXT("AdvancedDeletionTooltipText", "Open the Advanced Deletion tab"))
 	                        .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.PlacementBrowser"));
 	// FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FName("AdvancedDeletion"),
-	// 	FOnSpawnTab::CreateRaw(this,&FEnhancedEditorModV1Module::OnSpawnAdvancedDeletionTab));
+	// 	FOnSpawnTab::CreateRaw(this,&FEnhancedEditorModule::OnSpawnAdvancedDeletionTab));
 }
 
-TSharedRef<SDockTab> FEnhancedEditorModV1Module::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
+TSharedRef<SDockTab> FEnhancedEditorModule::OnSpawnAdvancedDeletionTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	// there are several types of ue tabs in TabRole;
 	// include slate c++ head file , using slate syntax to instance a tab stuff.
@@ -324,7 +324,7 @@ TSharedRef<SDockTab> FEnhancedEditorModV1Module::OnSpawnAdvancedDeletionTab(cons
 		];
 }
 
-TArray<TSharedPtr<FAssetData>> FEnhancedEditorModV1Module::GetAssetData()
+TArray<TSharedPtr<FAssetData>> FEnhancedEditorModule::GetAssetData()
 {
 	TArray<TSharedPtr<FAssetData>> AvailableAssetData;
 
@@ -357,7 +357,7 @@ TArray<TSharedPtr<FAssetData>> FEnhancedEditorModV1Module::GetAssetData()
 
 #pragma region ProcessDataForAdvanceDeletionTab
 
-bool FEnhancedEditorModV1Module::DeleteSingleAssetBySlate(const FAssetData& AssetDataToDelete)
+bool FEnhancedEditorModule::DeleteSingleAssetBySlate(const FAssetData& AssetDataToDelete)
 {
 	TArray<FAssetData> Assets;
 	Assets.Add(AssetDataToDelete);
@@ -371,7 +371,7 @@ bool FEnhancedEditorModV1Module::DeleteSingleAssetBySlate(const FAssetData& Asse
 	return false;
 }
 
-bool FEnhancedEditorModV1Module::DeleteMultipleAssetsBySlate(const TArray<FAssetData>& AssetsDataToDelete)
+bool FEnhancedEditorModule::DeleteMultipleAssetsBySlate(const TArray<FAssetData>& AssetsDataToDelete)
 {
 	if (ObjectTools::DeleteAssets(AssetsDataToDelete) > 0)
 	{
@@ -383,4 +383,4 @@ bool FEnhancedEditorModV1Module::DeleteMultipleAssetsBySlate(const TArray<FAsset
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FEnhancedEditorModV1Module, EnhancedEditorModV1)
+IMPLEMENT_MODULE(FEnhancedEditorModule, EnhancedEditorModV1)
