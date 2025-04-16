@@ -13,6 +13,17 @@
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": true,
-	"Installed": false
-	
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "EnhancedPCG",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "EnhancedEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
+		}
+	]
 }
