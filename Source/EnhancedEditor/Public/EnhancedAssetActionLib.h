@@ -6,6 +6,8 @@
 #include "Blutility/Classes/AssetActionUtility.h"
 #include "EnhancedAssetActionLib.generated.h"
 
+
+
 /**
  * 
  */
@@ -19,6 +21,6 @@ public:
     void FixMeshCollision(UStaticMesh* StaticMesh);
 
     UFUNCTION(BlueprintCallable,CallInEditor, Category = "Enhanced Asset Action")
-    TArray<FAssetData> FilterThinMesh(TArray<FAssetData> InAssets, float Portion, const FString& suffix);
+    TArray<FAssetData> FilterThinMesh(TArray<FAssetData> InAssets, float Thin_limit, float Vol_limit, const FString& suffix);
     
 };

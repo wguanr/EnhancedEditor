@@ -9,6 +9,7 @@
 
 #define LOCTEXT_NAMESPACE "EnhancedAssetActionLib"
 
+
 void UEnhancedAssetActionLib::FixMeshCollision(UStaticMesh* StaticMesh)
 {
     // 设置网格体的碰撞选项为 BlockAll
@@ -35,9 +36,10 @@ void UEnhancedAssetActionLib::FixMeshCollision(UStaticMesh* StaticMesh)
     StaticMesh->PostEditChange();
 }
 
-TArray<FAssetData> UEnhancedAssetActionLib::FilterThinMesh(TArray<FAssetData> InAssets, float Portion, const FString& suffix)
+TArray<FAssetData> UEnhancedAssetActionLib::FilterThinMesh(TArray<FAssetData> InAssets, float Thin_limit, float Vol_limit, const FString& suffix)
 {
-    check(Portion>0);
+    check(Thin_limit>0);
+    
     TArray<FAssetData> FilteredAssets;
     for (FAssetData Asset : InAssets) {
         if (Asset.IsValid() && (Asset.AssetClass.IsEqual(UStaticMesh::StaticClass()->GetFName()))) {
@@ -52,14 +54,17 @@ TArray<FAssetData> UEnhancedAssetActionLib::FilterThinMesh(TArray<FAssetData> In
                     app_size.Add(FCString::Atoi(*SizeStr));
                 }
                 app_size.Sort();
-                float portion = (float)app_size[0] / (float)app_size.Last();
-                if (portion > Portion) {
+                
+                float portion_condition = (float)(app_size[0] +  app_size[1]) / (float)app_size.Last();
+                float vol_condition = (float)(app_size[0] * app_size[1] * app_size.Last()) / Vol_limit;
+                if (portion_condition > Thin_limit || vol_condition > 1) {
                     continue;
                 }
+                
                 // add suffix
                 if (!suffix.IsEmpty() && !Asset.AssetName.ToString().Contains(suffix)) {
                     UEditorUtilityLibrary::RenameAsset(Asset.GetAsset(), (Asset.AssetName.ToString() + TEXT("_") + suffix));
-                    UE_LOG(LogTemp, Warning, TEXT("Filtered Asset: %s, ApproxSize portion is : %f"), *Asset.GetFullName(), portion);
+                    UE_LOG(LogTemp, Warning, TEXT("Filtered Asset: %s, ApproxSize portion is : %f"), *Asset.GetFullName(), portion_condition);
                 }
 
                 FilteredAssets.Add(Asset);
@@ -67,6 +72,7 @@ TArray<FAssetData> UEnhancedAssetActionLib::FilterThinMesh(TArray<FAssetData> In
             }
         }
     }
+
     return FilteredAssets;
 }
 
