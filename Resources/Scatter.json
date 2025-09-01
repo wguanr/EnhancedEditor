@@ -1,0 +1,54 @@
+﻿{
+  "MainBuilding": {
+    "Num": 200,
+    "ScalarDelta": {
+      "X": 0.8,
+      "Y": 0.5,
+      "Z": 0.8
+    },
+    "RotationDelta": {
+      "Pitch": 0,
+      "Yaw": 180,
+      "Roll": 0
+    },
+    "MinDistance": 500.0,
+    "bAlignToGround": true,
+    "GroundTraceDistance": 10000.0,
+    "HeightOffsetRange": {
+      "X": 0,
+      "Y": 50
+    }
+  },
+  "SubBuilding": {
+    "Num": 5,
+    "ScalarDelta": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.5
+    },
+    "RotationDelta": {
+      "Pitch": 5,
+      "Yaw": 180,
+      "Roll": 0
+    },
+    "MinDistance": 250.0,
+    "bAlignToGround": false,
+    "GroundTraceDistance": 10000.0
+  },
+  "SmallObject": {
+    "Num": 3000,
+    "ScalarDelta": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.5
+    },
+    "RotationDelta": {
+      "Pitch": 10,
+      "Yaw": 180,
+      "Roll": 0
+    },
+    "MinDistance": 50.0,
+    "bAlignToGround": false,
+    "GroundTraceDistance": 10000.0
+  }
+}
