@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FEnhancedEditorModule : public IModuleInterface
+class FEnhancedPCGModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;

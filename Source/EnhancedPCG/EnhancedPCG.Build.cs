@@ -1,16 +1,11 @@
 ﻿using UnrealBuildTool;
 
-public class EnhancedEditor : ModuleRules
+public class EnhancedPCG : ModuleRules
 {
-    public EnhancedEditor(ReadOnlyTargetRules Target) : base(Target)
+    public EnhancedPCG(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PrivateIncludePaths.AddRange(
-            new string[]
-            {
-                System.IO.Path.GetFullPath(Target.RelativeEnginePath) + "/Source/Editor/Blutility/Private",
-            });
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
@@ -25,10 +20,7 @@ public class EnhancedEditor : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "EditorScriptingUtilities",
-                "UnrealEd",
-                "AssetRegistry",
-                "Blutility",
+
             }
         );
     }
