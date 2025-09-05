@@ -4,8 +4,9 @@
 #include "IAssetTools.h"
 #include "AssetToolsModule.h"
 #include "EditorAssetLibrary.h"
-#include "AssetRegistryHelpers.h"
+
 #include "EditorUtilityLibrary.h"
+#include "PhysicsEngine/BodySetup.h"
 
 #define LOCTEXT_NAMESPACE "EnhancedAssetActionLib"
 

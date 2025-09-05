@@ -3,7 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AssetActionUtility.h"
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 1
 #include "Blutility/Classes/AssetActionUtility.h"
+#include "AssetRegistryHelpers.h"
+#else
+#include "AssetActionUtility.h"
+#endif
 #include "EnhancedAssetActionLib.generated.h"
 
 

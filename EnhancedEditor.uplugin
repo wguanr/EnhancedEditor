@@ -17,8 +17,8 @@
 	"Modules": [
 		{
 			"Name": "EnhancedPCG",
-			"Type": "Editor",
-			"LoadingPhase": "PreDefault"
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		},
 		{
 			"Name": "EnhancedEditor",

@@ -1,0 +1,34 @@
+---
+globs: **/*Build.cs
+description: UE5 模块依赖与构建规范
+---
+
+
+## Build.cs 依赖与构建约定
+
+- 参考现有构建脚本：
+  - [EnhancedEditor.Build.cs](mdc:EnhancedEditor/EnhancedEditor.Build.cs)
+  - [EnhancedPCG.Build.cs](mdc:EnhancedPCG/EnhancedPCG.Build.cs)
+
+- `EnhancedPCG` 模块建议依赖（依据当前源码用到的 API）：
+  - PublicDependencyModuleNames：`Core, CoreUObject, Engine, Json, JsonUtilities`
+  - PrivateDependencyModuleNames：`Projects`
+  - 使用编辑器专属功能，再按需加入 `UnrealEd`/`EditorSubsystem` 等（仅 Editor）。
+
+```csharp
+// 示例：在 *.Build.cs 中添加所需模块
+PublicDependencyModuleNames.AddRange(new string[] {
+	"Core", "CoreUObject", "Engine", "Json", "JsonUtilities"
+});
+
+PrivateDependencyModuleNames.AddRange(new string[] {
+	"Projects"
+});
+
+// 如需使用 Slate/UMG（当前未直接使用）
+// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "UMG" });
+```
+
+- 软引用加载（`TSoftObjectPtr`）与 JSON 解析都无需额外第三方；确保 `Json/JsonUtilities` 已加入。
+- 碰撞与世界查询（`FCollisionQueryParams`, `LineTraceSingleByChannel`）属于 `Engine` 模块。
+

@@ -1,0 +1,213 @@
+---
+description: Scatter 子系统的导航与数据约定
+globs: */Scatter/*.cpp,*/Scatter/*.h
+alwaysApply: false
+---
+## 抽象基类与多层散布框架设计（新）
+
+该设计将现有单体 `ARandomScatterDA` 的散布流程抽象为可复用的基类与可插拔算法，所有 ISM 与静态数据在每个散布 Actor 内闭环管理；通过一个 Manager 统一编排多层散布顺序，并在层与层之间传递输入输出信息。
+
+### 角色与职责
+- `AScatterActorBase`（抽象）
+  - 生成集群：在自身内部创建/缓存 `UHierarchicalInstancedStaticMeshComponent`。
+  - 执行算法
+  - 完整闭环：资源加载、HISM 复用与清理、Editor 调用、参数配置、统计日志。
+
+- `AScatterManager`
+  - 以“层”为单位管理多个 `AScatterActorBase` 子类实例的执行顺序（用户通过 Manager 添加/排序）。
+  - 汇集并传递跨层 `FScatterContext` 数据（上一层的点位/姿态/附加句柄）。
+  - 暴露统一的 Editor 入口（`RunPipeline`），负责清理/执行/回收。
+
+## 统一散布算法结构
+
+必要的输入：
+  - 获取散布的范围：方案1：边界获取：从 `ScatterBounds` 聚合 `FBox`/`FBox2D`，解析/合并边界。方案2：基于上一层 `FScatterContext` 的 `Transform`/`tagHandle` 作为锚点进行偏移采样。
+  - 获取散布的基础对象：`AssetPool`
+  - 散布函数和方法：以接口的形式去提供。
+必要的输出：
+  - HISM 的渲染结果
+  - 可以被其他散布使用的 `FScatterOutputs.InstanceScatterContext`（`TArray<FScatterContext>`）
+
+散布函数统一的参数：
+    - FRandStream 随机数系统
+    - 散布基础对象的相关参数：总体个数，Transform的constraint或范围
+    - 不同散布方案的混合权重：比如附着采样与区域随机采样的比例混合（70/30）。
+    - 是否使用碰撞检测或控制基础对象HISM的距离。
+
+
+提示：“采样点生成策略”本质上都是对点位置以及当前点的属性的计算。`ScatterBounds` 与上一层提供的 `FScatterContext` 都是为了确认散布点位的依据，因此可以混合使用多种方案。
+
+
+### 算法流程（伪代码摘要）
+- **PoissonDisk2D**：在二维平面（`ScatterBounds` 投影）做泊松圆盘采样；对每个候选点执行对齐/碰撞；生成实例与锚点（法线为地面法线）。
+- **GridJitter2D**：对边界区域建立规则网格，格心偏移（`Jitter`），剔除越界与过近点。
+- **ClusterCores2D**：先采样若干核心（`ClusterCoreCount`），基于高斯/重要性采样在核心周围产生簇，允许小重叠；与现有 `Cluster` 思路兼容。
+- **SurfaceAreaWeighted**：如提供 `AttachmentSurfaceMeshes` 或上层 `PointAnchors` 来源于网格三角面，则按三角面积权重随机采样点，并可用表面法线/切线确定朝向。这个比较复杂，可以先不做。
+- **HexGrid2D**：六边形蜂窝采样，适合规则阵列；参数 `Density` 控制边长。
+
+各算法共享步骤：
+1) 解析/合并边界；2) 采样 N 个候选点；3) 可选 `AlignToGround`；4) 过近/碰撞剔除（半径来自 `MinDistance` 或由 Mesh 尺寸推导）；5) HISM 分组实例化；6) 输出本层参数。
+
+### 算法接口模块化与参数化（SamplingUtils.h）
+
+目标：将“散布/采样策略”完全解耦为接口模块AScatterActorBase实例化时，需要调用对应接口来实现散布算法，统一在 `SamplingUtils.h` 暴露；每种算法都有各自的参数结构体。
+
+对接方式（以 `AScatterActorBase` 为例）：
+```cpp
+// 1) 准备 Bounds2D（从场景中的 ScatterBounds 聚合得到），或上一层的 FScatterContext 列表作为锚点
+FBox2D Bounds2D = AggregatedBounds2D;
+// 2) 按算法采样（示例：PoissonDisk2D 返回二维候选点）
+TArray<FVector2D> Points2D;
+ScatterSampling::PoissonDisk2D(Bounds2D, Config.MinDistance, Config.Num, Points2D);
+// 3) 将 Points2D 转为 FScatterContext（填充 Transform/句柄）
+TArray<FScatterContext> OutContexts;
+OutContexts.Reserve(Points2D.Num());
+for (const FVector2D& P : Points2D) {
+    FScatterContext Ctx; 
+    Ctx.Transform = FTransform(FRotator::ZeroRotator, FVector(P.X, P.Y, /* ComputeZ via trace if needed */ 0.f));
+    OutContexts.Add(Ctx);
+}
+// 4) 将 OutContexts 写入本层 FScatterOutputs.InstanceScatterContext，并用于实例化 HISM
+```
+
+
+### Manager 设计与执行时序
+```cpp
+UCLASS(Blueprintable)
+class AScatterManager : public AActor {
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Scatter|Pipeline")
+	TArray<AScatterActorBase*> Layers; // 也可提供 TSubclassOf 并在 BeginPlay/CallInEditor 动态 Spawn
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Scatter|Pipeline")
+	bool bClearBeforeRun = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Scatter|Pipeline")
+	int32 GlobalSeed = 0; // 可下发到每层 Config.Seed
+
+	UFUNCTION(CallInEditor)
+	void RunPipeline(); // 依次执行：传入 InSurfaces → 调用 ScatterThis → 汇总 OutSurfaces
+	UFUNCTION(CallInEditor)
+	void ClearAll();
+};
+```
+
+- 时序：
+  1) `ClearAll`（可选）→ 初始化 `TArray<FScatterContext> AccumulatedContexts`（空）。
+  2) 按 `Layers` 顺序：`Layer->AcceptPreviousContexts(AccumulatedContexts)` → `Layer->ScatterThis()` → `AccumulatedContexts.Append(Layer->GetOutputs().InstanceScatterContext)`。
+  3) 支持 Editor 模式一次性生成与回收；失败层应不中断整体流程（记录日志并继续）。
+
+### 数据闭环与性能
+- 每层内部：软引用资源 `LoadSynchronous` 一次后缓存；HISM 以 Mesh+Material 为键复用；清理用 `ClearPreviousScatter`。
+- 避免 Tick；随机源统一用 `FRandomStream(Config.Seed)` 以便可复现。
+- 如需表面对齐，可在本层中通过射线/法线估计实现，无需依赖外部 `AttachmentSurfaceSet`。
+
+### JSON/配置映射建议
+- 可沿用/扩展 `FScatterLayerConfig` 对应 JSON；另增：`Algorithm`, `ClusterCoreCount`, `ClusterInfluenceRadius`, `Jitter`, `Density`, `Seed`。
+- Manager 可从一个总 JSON 中读取层列表与顺序，将段键映射到对应 `Layer`。
+
+
+
+### 统一实例记录结构（跨系统共享）
+```cpp
+USTRUCT(BlueprintType)
+struct FScatterInstanceInfo {
+	GENERATED_BODY()
+	UPROPERTY() int32 InstanceIndex = -1;
+	UPROPERTY() FVector Location = FVector::ZeroVector;
+	UPROPERTY() FRotator Rotation = FRotator::ZeroRotator;
+	UPROPERTY() FVector Scale = FVector::OneVector;
+	UPROPERTY() FBox ActualBounds = FBox(ForceInit);
+	UPROPERTY() UHierarchicalInstancedStaticMeshComponent* HISMComponent = nullptr;
+	UPROPERTY() FName LayerTag = NAME_None; // "Main"/"Sub"/"Small" or custom
+};
+
+USTRUCT(BlueprintType)
+struct FScatterInstanceSet {
+	GENERATED_BODY()
+	UPROPERTY() TArray<FScatterInstanceInfo> Instances;
+};
+
+USTRUCT(BlueprintType)
+struct FScatterSharedContext {
+	GENERATED_BODY()
+	// 前序系统产物：实例与多层上下文
+	UPROPERTY() FScatterInstanceSet AccumulatedInstances;
+	UPROPERTY() TArray<FScatterContext> AccumulatedContexts;
+};
+```
+
+Manager 在每步完成后，执行：
+- `Context.AccumulatedContexts.Append(Layer.GetOutputs().InstanceScatterContext)`
+- `Context.AccumulatedInstances += Layer.GeneratedInstances`（子类在执行中维护）
+并将 `Context` 注入下一系统（可以通过 `AcceptPreviousContexts` 或 `AcceptSharedContext` 注入）。
+
+### 跨系统碰撞策略还原
+- 统一入口：`CheckCollision(Location, CollisionRadius, CurrentLayerTag)`，内部对 `Context.AccumulatedInstances` 与当前层已放置实例做距离判定。
+- 距离计算：
+  - 当前需要添加的实例与上一层附着的context实例之间进行计算，
+    - 调用 `Bound`（推荐在添加实例时填充 ）提取 XY 外接半径 `R = max(Size.X, Size.Y) * 0.5`
+    - 计算 `RequiredDistance`，获得当前层的采样点，作为hism的生成的location
+
+
+上述阈值与现行为一致，可通过配置暴露微调系数。
+
+## 统一资产随机化接口（新）
+
+为消除各子类内“网格/材质随机选择”重复逻辑，在基类提供标准化资产池与抽取策略。
+
+### 数据结构
+```cpp
+USTRUCT(BlueprintType)
+struct FScatterAssetEntry {
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSoftObjectPtr<UStaticMesh> Mesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<TSoftObjectPtr<UMaterialInterface>> CandidateMaterials; // 可为空
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Weight = 1.f; // 权重抽样
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FName Tag = NAME_None; // 可用于层/语义过滤
+};
+
+USTRUCT(BlueprintType)
+struct FScatterAssetPool {
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<FScatterAssetEntry> Entries;
+};
+
+USTRUCT(BlueprintType)
+struct FPickedAsset {
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) UStaticMesh* Mesh = nullptr;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) UMaterialInterface* Material = nullptr; // 可能为 nullptr 表示使用 Mesh 默认材质
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FName Tag = NAME_None;
+};
+```
+
+### 基类扩展 API
+```cpp
+UCLASS(Abstract, Blueprintable)
+class AScatterActorBase : public AActor {
+	GENERATED_BODY()
+public:
+	// 可选统一资产池（与 UnitMeshes/UnitMaterials 并存；若两者皆提供，优先 AssetPool）
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Scatter|Assets")
+	FScatterAssetPool AssetPool;
+
+protected:
+	// 准备与缓存资源（同步加载软引用），返回是否成功
+	virtual bool PrepareAssets();
+	// 权重随机抽样：可使用 Tag 过滤（空则忽略过滤）
+	virtual bool PickAsset(FPickedAsset& Out, const FName TagFilter = NAME_None);
+	// HISM 分组键：Mesh+Material，Material 为空则退化为 MeshOnly 组
+	virtual UHierarchicalInstancedStaticMeshComponent* GetOrCreateHISMCByPicked(const FPickedAsset& Picked);
+};
+```
+
+### 资产选择策略
+- 加载阶段：遍历 `AssetPool.Entries`，对每个 `Mesh` 与 `CandidateMaterials` 同步加载并缓存失败项（跳过）。
+- 抽样阶段：
+  - 若存在 `TagFilter`，仅在匹配 `Entry.Tag` 的条目间按 `Weight` 进行轮盘选择；否则全局选择。
+  - 若 `Entry.CandidateMaterials` 为空：
+    1) 若 `UnitMaterials` 非空，则从 `UnitMaterials` 随机选一；
+    2) 否则尝试 `Mesh->GetMaterial(0)`；
+    3) 若仍为空，保留 `nullptr`，HISM 将不设材质（引擎使用默认材质）。
+- HISM 分组：以 `(Mesh, Material)` 为键；`Material==nullptr` 归入 `MeshOnly` 组，保证实例复用与渲染批处理的稳定。
+

@@ -1,0 +1,39 @@
+---
+globs: *.h,*.hpp,*.cpp,*.inl
+description: Unreal Engine 5 C++ 代码与反射规范
+---
+## UE5 C++ 编码与反射规范（本仓库约定）
+
+可以忽视头文件的lint错误
+
+- 宏/反射
+  - 始终在 `UCLASS/USTRUCT/UENUM` 后紧跟 `GENERATED_BODY()`（或 `GENERATED_UCLASS_BODY` 等对应宏）。
+  - 反射字段使用 `UPROPERTY`/`UFUNCTION`，合理设置 `EditAnywhere/BlueprintReadWrite` 与 `Category`/`meta`。
+  - 不对非 `UObject` 类型滥用 `UPROPERTY`，对 `UObject*` 成员需 `UPROPERTY` 以参与 GC。
+
+- 头文件与包含
+  - 避免在 `.h` 中包含过多头；优先使用前置声明，在 `.cpp` 中包含实现所需头。
+  - 包含顺序：自身头 → 引擎/项目公有依赖 → 私有实现头。
+
+- 类型与日志
+  - 使用 UE 类型：`int32`, `uint8`, `FString`, `FName`, `FText`（UI 文本用 `FText`）。
+  - 日志统一用 `UE_LOG`；开发阶段可用 `LogTemp`，发布前建议按模块定义专用 `LogCategory`。
+
+- 内存与对象生命周期
+  - 避免手动 `new/delete` `UObject`；使用 `NewObject<T>`/`CreateDefaultSubobject` 并通过 `UPROPERTY` 持有。
+  - 组件创建后需 `RegisterComponent()` 并在销毁前清理实例（如 `ClearInstances()`）再 `DestroyComponent()`。
+
+- 数学与随机
+  - 使用 `FMath` 与 `FRandomStream`/`FMath::RandRange`；避免 `std::rand`。
+  - 向量距离优先 `Dist2D/Dist`；大量点采样时注意尝试上限避免无限循环。
+
+- 资源与软引用
+  - `TSoftObjectPtr` 需 `LoadSynchronous()` 或异步加载后判空再用；注意 `IsValid()` 与 `.Get()`。
+
+- 反序列化/路径
+  - 文件 IO 使用 `FPaths`/`FFileHelper`；JSON 使用 `Json` 与 `JsonUtilities` 模块。
+
+- 性能
+  - 大量实例请用 `UHierarchicalInstancedStaticMeshComponent` 分组（Mesh+Material 维度）；避免 Tick。
+  - 循环内避免重复加载资源与查找组件；尽量预取并缓存。
+

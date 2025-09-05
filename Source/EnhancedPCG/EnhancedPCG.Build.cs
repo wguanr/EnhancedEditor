@@ -20,6 +20,10 @@ public class EnhancedPCG : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "AssetRegistry",
+                "Json",
+                "JsonUtilities",
+                "DeveloperSettings",
 
             }
         );

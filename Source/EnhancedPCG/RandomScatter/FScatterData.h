@@ -18,7 +18,7 @@ enum class EScatterLevel : uint8
 
 // 散布配置结构 - 支持蓝图和JSON
 USTRUCT(BlueprintType)
-struct BLOCKS_API FLayerScatterConfig
+struct ENHANCEDPCG_API FLayerScatterConfig
 {
     GENERATED_BODY()
 
@@ -68,29 +68,33 @@ struct BLOCKS_API FLayerScatterConfig
     }
 
     // JSON读取函数
-    void LoadFromJson(const FString& JsonFilePath, const FString& ConfigName)
+    void LoadFromJson(const FString &JsonFilePath, const FString &ConfigName)
     {
         FString JsonString;
-        if (!FFileHelper::LoadFileToString(JsonString, *JsonFilePath)) {
+        if (!FFileHelper::LoadFileToString(JsonString, *JsonFilePath))
+        {
             UE_LOG(LogTemp, Warning, TEXT("加载JSON文件失败: %s"), *JsonFilePath);
             return;
         }
 
         TSharedPtr<FJsonObject> JsonObject;
         TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonString);
-        if (!FJsonSerializer::Deserialize(JsonReader, JsonObject)) {
+        if (!FJsonSerializer::Deserialize(JsonReader, JsonObject))
+        {
             UE_LOG(LogTemp, Error, TEXT("解析JSON文件失败"));
             return;
         }
 
         // 尝试读取特定层级的配置
         TSharedPtr<FJsonObject> LayerConfig = JsonObject->GetObjectField(ConfigName);
-        if (!LayerConfig.IsValid()) {
+        if (!LayerConfig.IsValid())
+        {
             // 如果没有特定层级配置，使用通用配置
             UE_LOG(LogTemp, Warning, TEXT("未找到 %s 配置，使用通用配置"), *ConfigName);
             LoadFromJsonObject(JsonObject);
         }
-        else {
+        else
+        {
             LoadFromJsonObject(LayerConfig);
         }
     }
@@ -98,19 +102,22 @@ struct BLOCKS_API FLayerScatterConfig
 private:
     void LoadFromJsonObject(TSharedPtr<FJsonObject> JsonObject)
     {
-        if (!JsonObject.IsValid()) return;
+        if (!JsonObject.IsValid())
+            return;
 
         // 读取基础配置
         Num = JsonObject->GetIntegerField(TEXT("Num"));
 
         // 读取变换配置
-        if (auto ScalarObj = JsonObject->GetObjectField(TEXT("ScalarDelta"))) {
+        if (auto ScalarObj = JsonObject->GetObjectField(TEXT("ScalarDelta")))
+        {
             ScalarObj->TryGetNumberField(TEXT("X"), ScalarDelta.X);
             ScalarObj->TryGetNumberField(TEXT("Y"), ScalarDelta.Y);
             ScalarObj->TryGetNumberField(TEXT("Z"), ScalarDelta.Z);
         }
 
-        if (auto RotationObj = JsonObject->GetObjectField(TEXT("RotationDelta"))) {
+        if (auto RotationObj = JsonObject->GetObjectField(TEXT("RotationDelta")))
+        {
             RotationObj->TryGetNumberField(TEXT("Pitch"), RotationDelta.Pitch);
             RotationObj->TryGetNumberField(TEXT("Yaw"), RotationDelta.Yaw);
             RotationObj->TryGetNumberField(TEXT("Roll"), RotationDelta.Roll);
@@ -120,7 +127,8 @@ private:
         JsonObject->TryGetNumberField(TEXT("MinDistance"), MinDistance);
         JsonObject->TryGetBoolField(TEXT("bAlignToGround"), bAlignToGround);
 
-        if (auto HeightObj = JsonObject->GetObjectField(TEXT("HeightOffsetRange"))) {
+        if (auto HeightObj = JsonObject->GetObjectField(TEXT("HeightOffsetRange")))
+        {
             HeightObj->TryGetNumberField(TEXT("X"), HeightOffsetRange.X);
             HeightObj->TryGetNumberField(TEXT("Y"), HeightOffsetRange.Y);
         }
@@ -129,55 +137,5 @@ private:
         JsonObject->TryGetBoolField(TEXT("bUseCollisionDetection"), bUseCollisionDetection);
         JsonObject->TryGetNumberField(TEXT("CollisionRadius"), CollisionRadius);
         JsonObject->TryGetNumberField(TEXT("GroundTraceDistance"), GroundTraceDistance);
-    }
-};
-
-// ===== 旧版本兼容 - 保持原有的FScatterData结构体 =====
-USTRUCT(BlueprintType)
-struct BLOCKS_API FScatterData
-{
-    GENERATED_BODY()
-
-    // 基础散布配置 - 与JsonObjectConverter兼容
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
-    int32 Num = 100;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Transform")
-    FVector ScalarDelta = FVector(0.2f, 0.2f, 0.2f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Transform")
-    FRotator RotationDelta = FRotator(15.0f, 180.0f, 15.0f);
-
-    // 扩展配置（可选）
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Placement")
-    float MinDistance = 200.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Placement")
-    bool bAlignToGround = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-    bool bUseCollisionDetection = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-    float CollisionRadius = 100.0f;
-
-    // 材质和网格路径配置
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assets")
-    FString MaterialFolderPath = TEXT("/Game/Materials");
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Assets")
-    FString MeshFolderPath = TEXT("/Game/Meshes");
-
-    FScatterData()
-    {
-        Num = 100;
-        ScalarDelta = FVector(0.2f, 0.2f, 0.2f);
-        RotationDelta = FRotator(15.0f, 180.0f, 15.0f);
-        MinDistance = 200.0f;
-        bAlignToGround = true;
-        bUseCollisionDetection = true;
-        CollisionRadius = 100.0f;
-        MaterialFolderPath = TEXT("/Game/Materials");
-        MeshFolderPath = TEXT("/Game/Meshes");
     }
 };

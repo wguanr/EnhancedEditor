@@ -14,7 +14,7 @@ public class EnhancedEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core", "Blutility",
             }
         );
 

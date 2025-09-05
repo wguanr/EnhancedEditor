@@ -1,0 +1,28 @@
+---
+alwaysApply: true
+---
+
+** 注意，本模块主要以Editor编辑器模式为主，尽可能使用Editor状态下的架构和方法 **
+
+## UE5 插件项目结构与入口
+
+本仓库为 UE5 插件源码（位于 `Source/`）。主要包含两个模块：`EnhancedEditor` 与 `EnhancedPCG`。
+
+- `EnhancedEditor` 模块
+  - 构建脚本：[EnhancedEditor.Build.cs](mdc:EnhancedEditor/EnhancedEditor.Build.cs)
+- `EnhancedPCG` 模块（包含随机散布子系统）
+  - 构建脚本：[EnhancedPCG.Build.cs](mdc:EnhancedPCG/EnhancedPCG.Build.cs)
+  - 随机散布核心 Actor：[RandomScatterDA.h](mdc:EnhancedPCG/RandomScatter/RandomScatterDA.h)、[RandomScatterDA.cpp](mdc:EnhancedPCG/RandomScatter/RandomScatterDA.cpp)
+  - 层级配置结构（蓝图/JSON 共享）：[FScatterData.h](mdc:EnhancedPCG/RandomScatter/FScatterData.h)
+  - 网格与材质数据资产：[SMDataAsset.h](mdc:EnhancedPCG/RandomScatter/SMDataAsset.h)
+  - 体素散布数据资产（备份/实验）：[VoxScatterDataAsset.h](mdc:EnhancedPCG/RandomScatter/VoxScatterDataAsset.h)
+
+### 导航提示
+- 运行入口：`ARandomScatterDA::BeginPlay()` 会读取 JSON 并触发 `ScatterThis()`。
+- 关键信息流：DataAsset → 选取 Mesh/Material → 生成/对齐位置 → 通过 `UHierarchicalInstancedStaticMeshComponent` 批量实例化。
+- JSON 配置读取路径位于 `ARandomScatterDA::ReadJson()`，请确保外部 `Scatter.json` 文件存在并可被引擎访问。
+
+### 约定
+- 约定 Volume 标签为 `ScatterBounds`，用于限定散布范围（详见 `ScatterThis()` 内的查找逻辑）。
+- 三层散布枚举与配置键位请参考 `[FScatterData.h](mdc:EnhancedPCG/RandomScatter/FScatterData.h)` 中的 `EScatterLevel` 与 `FLayerScatterConfig`。
+

@@ -41,46 +41,53 @@ void ARandomScatterDA::BeginPlay()
 {
     Super::BeginPlay();
     ReadJson();
-    ScatterActors();
+    ScatterThis();
 }
 
-void ARandomScatterDA::ScatterActors()
+void ARandomScatterDA::ScatterThis()
 {
     ClearPreviousScatter();
 
-    TArray<AActor*> FoundActors;
+    TArray<AActor *> FoundActors;
     const FName VolumeTag(TEXT("ScatterBounds"));
     UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), AVolume::StaticClass(), VolumeTag, FoundActors);
 
-    if (FoundActors.Num() == 0) {
+    for (AActor *act : FoundActors)
+    {
+        ScatterBounds.AddUnique(Cast<AVolume>(act));
+    }
+
+    if (ScatterBounds.Num() == 0)
+    {
         UE_LOG(LogTemp, Error, TEXT("没有找到散布边界Volume"));
         return;
     }
 
-    for (AActor* act : FoundActors) {
-        ScatterBounds.AddUnique(Cast<AVolume>(act));
-    }
-
-    for (AVolume* vol : ScatterBounds) {
+    for (AVolume *vol : ScatterBounds)
+    {
         ScatterActorsLayered(vol);
     }
 }
 
-void ARandomScatterDA::GetMaterialsFromDataAsset(TArray<UMaterialInterface*>& OutMaterials, EScatterLevel Level) const
+void ARandomScatterDA::GetMaterialsFromDataAsset(TArray<UMaterialInterface *> &OutMaterials, EScatterLevel Level) const
 {
-    if (!ScattersDataAsset.IsValid()) {
-        USMDataAsset* LoadedDataAsset = ScattersDataAsset.LoadSynchronous();
-        if (!LoadedDataAsset) {
+    if (!ScattersDataAsset.IsValid())
+    {
+        USMDataAsset *LoadedDataAsset = ScattersDataAsset.LoadSynchronous();
+        if (!LoadedDataAsset)
+        {
             UE_LOG(LogTemp, Error, TEXT("加载MaterialDataAsset失败"));
             return;
         }
     }
 
-    USMDataAsset* DataAsset = ScattersDataAsset.Get();
-    if (!DataAsset) return;
+    USMDataAsset *DataAsset = ScattersDataAsset.Get();
+    if (!DataAsset)
+        return;
 
-    TArray<TSoftObjectPtr<UMaterialInterface>>* MaterialArray = nullptr;
-    switch (Level) {
+    TArray<TSoftObjectPtr<UMaterialInterface>> *MaterialArray = nullptr;
+    switch (Level)
+    {
     case EScatterLevel::MainBuilding:
         MaterialArray = &DataAsset->Materials;
         break;
@@ -92,31 +99,38 @@ void ARandomScatterDA::GetMaterialsFromDataAsset(TArray<UMaterialInterface*>& Ou
         break;
     }
 
-    if (MaterialArray && MaterialArray->Num() > 0) {
-        for (const TSoftObjectPtr<UMaterialInterface>& MaterialRef : *MaterialArray) {
-            UMaterialInterface* Material = MaterialRef.LoadSynchronous();
-            if (Material) {
+    if (MaterialArray && MaterialArray->Num() > 0)
+    {
+        for (const TSoftObjectPtr<UMaterialInterface> &MaterialRef : *MaterialArray)
+        {
+            UMaterialInterface *Material = MaterialRef.LoadSynchronous();
+            if (Material)
+            {
                 OutMaterials.Add(Material);
             }
         }
     }
 }
 
-void ARandomScatterDA::GetMeshFromDataAsset(TArray<UStaticMesh*>& OutAssets, EScatterLevel Level) const
+void ARandomScatterDA::GetMeshFromDataAsset(TArray<UStaticMesh *> &OutAssets, EScatterLevel Level) const
 {
-    if (!ScattersDataAsset.IsValid()) {
-        USMDataAsset* LoadedDataAsset = ScattersDataAsset.LoadSynchronous();
-        if (!LoadedDataAsset) {
+    if (!ScattersDataAsset.IsValid())
+    {
+        USMDataAsset *LoadedDataAsset = ScattersDataAsset.LoadSynchronous();
+        if (!LoadedDataAsset)
+        {
             UE_LOG(LogTemp, Error, TEXT("加载MeshDataAsset失败"));
             return;
         }
     }
 
-    USMDataAsset* DataAsset = ScattersDataAsset.Get();
-    if (!DataAsset) return;
+    USMDataAsset *DataAsset = ScattersDataAsset.Get();
+    if (!DataAsset)
+        return;
 
-    TArray<TSoftObjectPtr<UStaticMesh>>* MeshArray = nullptr;
-    switch (Level) {
+    TArray<TSoftObjectPtr<UStaticMesh>> *MeshArray = nullptr;
+    switch (Level)
+    {
     case EScatterLevel::MainBuilding:
         MeshArray = &DataAsset->Meshes;
         break;
@@ -128,10 +142,13 @@ void ARandomScatterDA::GetMeshFromDataAsset(TArray<UStaticMesh*>& OutAssets, ESc
         break;
     }
 
-    if (MeshArray && MeshArray->Num() > 0) {
-        for (const TSoftObjectPtr<UStaticMesh>& MeshRef : *MeshArray) {
-            UStaticMesh* Mesh = MeshRef.LoadSynchronous();
-            if (Mesh) {
+    if (MeshArray && MeshArray->Num() > 0)
+    {
+        for (const TSoftObjectPtr<UStaticMesh> &MeshRef : *MeshArray)
+        {
+            UStaticMesh *Mesh = MeshRef.LoadSynchronous();
+            if (Mesh)
+            {
                 OutAssets.Add(Mesh);
             }
         }
@@ -148,7 +165,7 @@ void ARandomScatterDA::ReadJson()
     SmallObjectLayer.LoadFromJson(JsonFilePath, TEXT("SmallObject"));
 }
 
-void ARandomScatterDA::ScatterActorsLayered(const AVolume* Bounds)
+void ARandomScatterDA::ScatterActorsLayered(const AVolume *Bounds)
 {
     FVector Origin = Bounds->GetBounds().Origin;
     FVector BoxExtent = Bounds->GetBounds().BoxExtent;
@@ -162,16 +179,17 @@ void ARandomScatterDA::ScatterActorsLayered(const AVolume* Bounds)
     UE_LOG(LogTemp, Warning, TEXT("散布完成，总共生成 %d 个实例"), ScatteredInstances.Num());
 }
 
-void ARandomScatterDA::ScatterMainBuildings(const FVector& Min, const FVector& Max)
+void ARandomScatterDA::ScatterMainBuildings(const FVector &Min, const FVector &Max)
 {
-    const FLayerScatterConfig& LayerConfig = MainBuildingLayer;
+    const FLayerScatterConfig &LayerConfig = MainBuildingLayer;
 
-    TArray<UMaterialInterface*> Materials;
-    TArray<UStaticMesh*> StaticMeshes;
+    TArray<UMaterialInterface *> Materials;
+    TArray<UStaticMesh *> StaticMeshes;
     GetMaterialsFromDataAsset(Materials, EScatterLevel::MainBuilding);
     GetMeshFromDataAsset(StaticMeshes, EScatterLevel::MainBuilding);
 
-    if (StaticMeshes.Num() == 0 || Materials.Num() == 0) {
+    if (StaticMeshes.Num() == 0 || Materials.Num() == 0)
+    {
         UE_LOG(LogTemp, Error, TEXT("主建筑层级数据不足"));
         return;
     }
@@ -181,11 +199,13 @@ void ARandomScatterDA::ScatterMainBuildings(const FVector& Min, const FVector& M
     GenerateBuildingClusters(Min, Max, LayerConfig, AllLocations);
 
     int32 SuccessCount = 0;
-    for (const FVector& Location : AllLocations) {
+    for (const FVector &Location : AllLocations)
+    {
         FVector AdjustedLocation = Location;
 
         // 主建筑必须进行地面对齐射线检测
-        if (LayerConfig.bAlignToGround && !AlignToGround(AdjustedLocation, LayerConfig.GroundTraceDistance)) {
+        if (LayerConfig.bAlignToGround && !AlignToGround(AdjustedLocation, LayerConfig.GroundTraceDistance))
+        {
             UE_LOG(LogTemp, Log, TEXT("主建筑无法找到地面，跳过位置 (%.1f, %.1f, %.1f)"), Location.X, Location.Y, Location.Z);
             continue;
         }
@@ -195,16 +215,17 @@ void ARandomScatterDA::ScatterMainBuildings(const FVector& Min, const FVector& M
         //     continue;
         // }
 
-        UStaticMesh* SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
-        UMaterialInterface* SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
+        UStaticMesh *SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
+        UMaterialInterface *SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
 
-        UHierarchicalInstancedStaticMeshComponent* HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
+        UHierarchicalInstancedStaticMeshComponent *HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
 
         // 使用新函数获取实际的transform信息
         FTransform ActualTransform;
         int32 InstanceIndex = AddInstanceWithTransform(HISMC, AdjustedLocation, LayerConfig, ActualTransform);
 
-        if (InstanceIndex >= 0) {
+        if (InstanceIndex >= 0)
+        {
             FScatteredInstanceInfo InstanceInfo;
             InstanceInfo.InstanceIndex = InstanceIndex;
             InstanceInfo.Location = AdjustedLocation;
@@ -226,21 +247,23 @@ void ARandomScatterDA::ScatterMainBuildings(const FVector& Min, const FVector& M
 
 void ARandomScatterDA::ScatterSubBuildings()
 {
-    const FLayerScatterConfig& LayerConfig = SubBuildingLayer;
+    const FLayerScatterConfig &LayerConfig = SubBuildingLayer;
 
-    TArray<UMaterialInterface*> Materials;
-    TArray<UStaticMesh*> StaticMeshes;
+    TArray<UMaterialInterface *> Materials;
+    TArray<UStaticMesh *> StaticMeshes;
     GetMaterialsFromDataAsset(Materials, EScatterLevel::SubBuilding);
     GetMeshFromDataAsset(StaticMeshes, EScatterLevel::SubBuilding);
 
-    if (StaticMeshes.Num() == 0 || Materials.Num() == 0) {
-        UE_LOG(LogTemp, Error, TEXT("附属建筑层级数据不足"));
+    if (StaticMeshes.Num() == 0 || Materials.Num() == 0)
+    {
+        UE_LOG(LogTemp, Display, TEXT("附属建筑层级数据不足, 跳过"));
         return;
     }
 
-    const TSet<FScatteredInstanceInfo>& MainBuildings = ScatteredInstances.MainBuildings;
+    const TSet<FScatteredInstanceInfo> &MainBuildings = ScatteredInstances.MainBuildings;
 
-    if (MainBuildings.Num() == 0) {
+    if (MainBuildings.Num() == 0)
+    {
         UE_LOG(LogTemp, Warning, TEXT("没有主建筑可供放置附属构筑物"));
         return;
     }
@@ -249,7 +272,8 @@ void ARandomScatterDA::ScatterSubBuildings()
     int32 MainBuildingIndex = 0;
 
     // 为每个主建筑生成围绕它的副建筑点位
-    for (const FScatteredInstanceInfo& TargetBuilding : MainBuildings) {
+    for (const FScatteredInstanceInfo &TargetBuilding : MainBuildings)
+    {
 
         // 根据主建筑实际尺寸计算副建筑数量
         int32 SubBuildingsForThisBuilding = CalculateSubBuildingCount(TargetBuilding, LayerConfig);
@@ -272,8 +296,10 @@ void ARandomScatterDA::ScatterSubBuildings()
         int32 CurrentBuildingSuccessCount = 0;
 
         // 遍历候选位置并尝试放置副建筑
-        for (const FVector& BaseLocation : CandidateLocations) {
-            if (CurrentBuildingSuccessCount >= SubBuildingsForThisBuilding) {
+        for (const FVector &BaseLocation : CandidateLocations)
+        {
+            if (CurrentBuildingSuccessCount >= SubBuildingsForThisBuilding)
+            {
                 break;
             }
 
@@ -282,21 +308,22 @@ void ARandomScatterDA::ScatterSubBuildings()
             CandidateLocation.Z += FMath::RandRange(50.0f, 150.0f);
 
             // 检查碰撞
-            if (LayerConfig.bUseCollisionDetection && CheckCollision(CandidateLocation, LayerConfig.CollisionRadius, EScatterLevel::SubBuilding)) {
+            if (LayerConfig.bUseCollisionDetection && CheckCollision(CandidateLocation, LayerConfig.CollisionRadius, EScatterLevel::SubBuilding))
+            {
                 continue;
             }
 
             // 选择随机的网格和材质
-            UStaticMesh* SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
-            UMaterialInterface* SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
+            UStaticMesh *SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
+            UMaterialInterface *SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
 
-            UHierarchicalInstancedStaticMeshComponent* HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
+            UHierarchicalInstancedStaticMeshComponent *HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
 
             // 创建对齐旋转的LayerConfig副本
             FLayerScatterConfig AlignedConfig = LayerConfig;
             // 副建筑旋转与主建筑对齐：0°, 90°, 180°, 270°
             float BaseYaw = TargetBuilding.Rotation.Yaw;
-            float AlignmentOffsets[] = { 0.0f, 90.0f, 180.0f, 270.0f };
+            float AlignmentOffsets[] = {0.0f, 90.0f, 180.0f, 270.0f};
             float SelectedOffset = AlignmentOffsets[FMath::RandRange(0, 3)];
             float AlignedYaw = BaseYaw + SelectedOffset;
 
@@ -308,7 +335,8 @@ void ARandomScatterDA::ScatterSubBuildings()
             int32 InstanceIndex = AddInstanceWithTransform(HISMC, CandidateLocation, AlignedConfig, ActualTransform);
 
             // 手动调整旋转以对齐主建筑
-            if (InstanceIndex >= 0 && HISMC) {
+            if (InstanceIndex >= 0 && HISMC)
+            {
                 FTransform AlignedTransform = ActualTransform;
                 FRotator AlignedRotation = ActualTransform.GetRotation().Rotator();
                 AlignedRotation.Yaw = AlignedYaw;
@@ -341,17 +369,18 @@ void ARandomScatterDA::ScatterSubBuildings()
     UE_LOG(LogTemp, Warning, TEXT("附属建筑完成：生成 %d 个"), TotalSuccessCount);
 }
 
-void ARandomScatterDA::ScatterSmallObjects(const FVector& Min, const FVector& Max)
+void ARandomScatterDA::ScatterSmallObjects(const FVector &Min, const FVector &Max)
 {
-    const FLayerScatterConfig& LayerConfig = SmallObjectLayer;
+    const FLayerScatterConfig &LayerConfig = SmallObjectLayer;
 
-    TArray<UMaterialInterface*> Materials;
-    TArray<UStaticMesh*> StaticMeshes;
+    TArray<UMaterialInterface *> Materials;
+    TArray<UStaticMesh *> StaticMeshes;
     GetMaterialsFromDataAsset(Materials, EScatterLevel::SmallObject);
     GetMeshFromDataAsset(StaticMeshes, EScatterLevel::SmallObject);
 
-    if (StaticMeshes.Num() == 0 || Materials.Num() == 0) {
-        UE_LOG(LogTemp, Error, TEXT("小物体层级数据不足"));
+    if (StaticMeshes.Num() == 0 || Materials.Num() == 0)
+    {
+        UE_LOG(LogTemp, Display, TEXT("小物体层级数据不足,跳过"));
         return;
     }
 
@@ -359,53 +388,61 @@ void ARandomScatterDA::ScatterSmallObjects(const FVector& Min, const FVector& Ma
     int32 RandomCount = LayerConfig.Num - AttachedCount;
     int32 TotalSuccessCount = 0;
 
-    if (AttachedCount > 0) {
+    if (AttachedCount > 0)
+    {
         TotalSuccessCount += ScatterAttachedSmallObjects(AttachedCount, StaticMeshes, Materials, LayerConfig);
     }
 
-    if (RandomCount > 0) {
+    if (RandomCount > 0)
+    {
         TotalSuccessCount += ScatterRandomSmallObjects(Min, Max, RandomCount, StaticMeshes, Materials, LayerConfig);
     }
 
     UE_LOG(LogTemp, Warning, TEXT("小物体完成：生成 %d 个"), TotalSuccessCount);
 }
 
-bool ARandomScatterDA::AlignToGround(FVector& InOutLocation, float TraceDistance) const
+bool ARandomScatterDA::AlignToGround(FVector &InOutLocation, float TraceDistance) const
 {
-    if (!GetWorld()) return false;
+    if (!GetWorld())
+        return false;
 
     FVector StartLocation = InOutLocation + FVector(0, 0, TraceDistance * 0.5f);
     FVector EndLocation = InOutLocation - FVector(0, 0, TraceDistance * 0.5f);
 
     FCollisionQueryParams QueryParams;
     QueryParams.bTraceComplex = true;
-    QueryParams.AddIgnoredActor(const_cast<ARandomScatterDA*>(this));
+    QueryParams.AddIgnoredActor(const_cast<ARandomScatterDA *>(this));
 
     FHitResult HitResult;
     bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_WorldStatic, QueryParams);
 
-    if (bHit) {
+    if (bHit)
+    {
         InOutLocation.Z = HitResult.Location.Z;
         return true;
     }
     return false;
 }
 
-bool ARandomScatterDA::CheckCollision(const FVector& Location, float CollisionRadius, EScatterLevel CurrentLevel) const
+bool ARandomScatterDA::CheckCollision(const FVector &Location, float CollisionRadius, EScatterLevel CurrentLevel) const
 {
     // 检查所有层级的实例，不只是当前层级
     TArray<FScatteredInstanceInfo> AllInstances;
-    for (const FScatteredInstanceInfo& Instance : ScatteredInstances.MainBuildings) {
+    for (const FScatteredInstanceInfo &Instance : ScatteredInstances.MainBuildings)
+    {
         AllInstances.Add(Instance);
     }
-    for (const FScatteredInstanceInfo& Instance : ScatteredInstances.SubBuildings) {
+    for (const FScatteredInstanceInfo &Instance : ScatteredInstances.SubBuildings)
+    {
         AllInstances.Add(Instance);
     }
-    for (const FScatteredInstanceInfo& Instance : ScatteredInstances.SmallObjects) {
+    for (const FScatteredInstanceInfo &Instance : ScatteredInstances.SmallObjects)
+    {
         AllInstances.Add(Instance);
     }
 
-    for (const auto& ExistingInstance : AllInstances) {
+    for (const auto &ExistingInstance : AllInstances)
+    {
 
         float Distance = FVector::Dist(Location, ExistingInstance.Location);
 
@@ -413,52 +450,62 @@ bool ARandomScatterDA::CheckCollision(const FVector& Location, float CollisionRa
         float RequiredDistance = CollisionRadius;
 
         // 如果现有实例有实际bounds信息，使用bounds计算
-        if (!ExistingInstance.ActualBounds.IsValid) {
+        if (!ExistingInstance.ActualBounds.IsValid)
+        {
             // 回退到原来的逻辑
-            if (CurrentLevel == EScatterLevel::SmallObject) {
+            if (CurrentLevel == EScatterLevel::SmallObject)
+            {
                 RequiredDistance = FMath::Max(CollisionRadius, 50.0f);
             }
-            else if (CurrentLevel == EScatterLevel::SubBuilding && ExistingInstance.Level == EScatterLevel::MainBuilding) {
+            else if (CurrentLevel == EScatterLevel::SubBuilding && ExistingInstance.Level == EScatterLevel::MainBuilding)
+            {
                 RequiredDistance = CollisionRadius * 0.7f;
             }
         }
-        else {
+        else
+        {
             // 使用实际bounds计算所需距离
             FVector ExistingSize = ExistingInstance.ActualBounds.GetSize();
             float ExistingRadius = FMath::Max(ExistingSize.X, ExistingSize.Y) * 0.5f;
 
-            if (CurrentLevel == EScatterLevel::MainBuilding) {
+            if (CurrentLevel == EScatterLevel::MainBuilding)
+            {
                 RequiredDistance = FMath::Max(CollisionRadius, ExistingRadius) + 100.0f; // 主建筑之间保持更大距离
             }
-            else if (CurrentLevel == EScatterLevel::SubBuilding && ExistingInstance.Level == EScatterLevel::MainBuilding) {
+            else if (CurrentLevel == EScatterLevel::SubBuilding && ExistingInstance.Level == EScatterLevel::MainBuilding)
+            {
                 RequiredDistance = ExistingRadius * 0.8f + CollisionRadius; // 副建筑与主建筑的距离基于主建筑实际尺寸
             }
-            else if (CurrentLevel == EScatterLevel::SmallObject) {
+            else if (CurrentLevel == EScatterLevel::SmallObject)
+            {
                 RequiredDistance = FMath::Max(CollisionRadius, ExistingRadius * 0.5f + 25.0f);
             }
-            else {
+            else
+            {
                 RequiredDistance = FMath::Max(CollisionRadius, ExistingRadius) + 50.0f;
             }
         }
 
-        if (Distance < RequiredDistance) {
+        if (Distance < RequiredDistance)
+        {
             return true;
         }
     }
     return false;
 }
 
-void ARandomScatterDA::GenerateRandomLocations(const FVector& Min, const FVector& Max, const FLayerScatterConfig& LayerConfig, TArray<FVector>& OutLocations) const
+void ARandomScatterDA::GenerateRandomLocations(const FVector &Min, const FVector &Max, const FLayerScatterConfig &LayerConfig, TArray<FVector> &OutLocations) const
 {
     OutLocations.Empty();
 
     FVector AreaSize = Max - Min;
-    float CellSize = FMath::Max(LayerConfig.MinDistance, FMath::Min(AreaSize.X, AreaSize.Y) / FMath::Sqrt(LayerConfig.Num));
+    float CellSize = FMath::Max(LayerConfig.MinDistance, FMath::Min(AreaSize.X, AreaSize.Y) / FMath::Sqrt((float)LayerConfig.Num));
 
     TSet<FIntVector> OccupiedCells;
     int32 MaxAttempts = LayerConfig.Num * 20;
 
-    for (int32 Attempts = 0; Attempts < MaxAttempts && OutLocations.Num() < LayerConfig.Num; Attempts++) {
+    for (int32 Attempts = 0; Attempts < MaxAttempts && OutLocations.Num() < LayerConfig.Num; Attempts++)
+    {
         FVector CandidateLocation = FVector(
             FMath::RandRange(Min.X, Max.X),
             FMath::RandRange(Min.Y, Max.Y),
@@ -469,23 +516,26 @@ void ARandomScatterDA::GenerateRandomLocations(const FVector& Min, const FVector
             FMath::FloorToInt((CandidateLocation.Y - Min.Y) / CellSize),
             0);
 
-        if (!OccupiedCells.Contains(CellIndex)) {
+        if (!OccupiedCells.Contains(CellIndex))
+        {
             OutLocations.Add(CandidateLocation);
             OccupiedCells.Add(CellIndex);
         }
     }
 }
 
-UHierarchicalInstancedStaticMeshComponent* ARandomScatterDA::GetOrCreateHISMC(UStaticMesh* Mesh, UMaterialInterface* Material)
+UHierarchicalInstancedStaticMeshComponent *ARandomScatterDA::GetOrCreateHISMC(UStaticMesh *Mesh, UMaterialInterface *Material)
 {
     // 查找是否已存在相同Mesh和Material的HISMC
-    for (auto& HISMCInfo : HISMComponents) {
-        if (HISMCInfo.Mesh == Mesh && HISMCInfo.Material == Material) {
+    for (auto &HISMCInfo : HISMComponents)
+    {
+        if (HISMCInfo.Mesh == Mesh && HISMCInfo.Material == Material)
+        {
             return HISMCInfo.Component;
         }
     }
 
-    UHierarchicalInstancedStaticMeshComponent* NewHISMC = NewObject<UHierarchicalInstancedStaticMeshComponent>(
+    UHierarchicalInstancedStaticMeshComponent *NewHISMC = NewObject<UHierarchicalInstancedStaticMeshComponent>(
         this,
         UHierarchicalInstancedStaticMeshComponent::StaticClass(),
         FName(*FString::Printf(TEXT("HISMC_%d"), HISMComponents.Num())));
@@ -508,15 +558,16 @@ UHierarchicalInstancedStaticMeshComponent* ARandomScatterDA::GetOrCreateHISMC(US
     return NewHISMC;
 }
 
-int32 ARandomScatterDA::AddInstance(UHierarchicalInstancedStaticMeshComponent* HISMC, const FVector& Location, const FLayerScatterConfig& LayerConfig)
+int32 ARandomScatterDA::AddInstance(UHierarchicalInstancedStaticMeshComponent *HISMC, const FVector &Location, const FLayerScatterConfig &LayerConfig)
 {
     FTransform OutTransform;
     return AddInstanceWithTransform(HISMC, Location, LayerConfig, OutTransform);
 }
 
-int32 ARandomScatterDA::AddInstanceWithTransform(UHierarchicalInstancedStaticMeshComponent* HISMC, const FVector& Location, const FLayerScatterConfig& LayerConfig, FTransform& OutTransform)
+int32 ARandomScatterDA::AddInstanceWithTransform(UHierarchicalInstancedStaticMeshComponent *HISMC, const FVector &Location, const FLayerScatterConfig &LayerConfig, FTransform &OutTransform)
 {
-    if (!HISMC) return -1;
+    if (!HISMC)
+        return -1;
 
     // 生成随机变换
     FRotator Rotation = FRotator(0, FMath::RandRange(-LayerConfig.RotationDelta.Yaw, LayerConfig.RotationDelta.Yaw), 0);
@@ -537,8 +588,10 @@ void ARandomScatterDA::ClearPreviousScatter()
     UE_LOG(LogTemp, Warning, TEXT("清理 %d 个HISMC组件"), HISMComponents.Num());
 
     // 清理所有HISMC组件
-    for (auto& HISMCInfo : HISMComponents) {
-        if (HISMCInfo.Component && IsValid(HISMCInfo.Component)) {
+    for (auto &HISMCInfo : HISMComponents)
+    {
+        if (HISMCInfo.Component && IsValid(HISMCInfo.Component))
+        {
             // 先清空所有实例
             HISMCInfo.Component->ClearInstances();
             // 然后销毁组件
@@ -550,44 +603,51 @@ void ARandomScatterDA::ClearPreviousScatter()
     ScatteredInstances.Empty();
 }
 
-int32 ARandomScatterDA::ScatterAttachedSmallObjects(int32 TargetCount, const TArray<UStaticMesh*>& StaticMeshes, const TArray<UMaterialInterface*>& Materials, const FLayerScatterConfig& LayerConfig)
+int32 ARandomScatterDA::ScatterAttachedSmallObjects(int32 TargetCount, const TArray<UStaticMesh *> &StaticMeshes, const TArray<UMaterialInterface *> &Materials, const FLayerScatterConfig &LayerConfig)
 {
     TArray<FScatteredInstanceInfo> AttachableObjects;
     // 收集主建筑和副建筑作为可附着对象
-    for (const FScatteredInstanceInfo& Instance : ScatteredInstances.MainBuildings) {
+    for (const FScatteredInstanceInfo &Instance : ScatteredInstances.MainBuildings)
+    {
         AttachableObjects.Add(Instance);
     }
-    for (const FScatteredInstanceInfo& Instance : ScatteredInstances.SubBuildings) {
+    for (const FScatteredInstanceInfo &Instance : ScatteredInstances.SubBuildings)
+    {
         AttachableObjects.Add(Instance);
     }
 
-    if (AttachableObjects.Num() == 0) return 0;
+    if (AttachableObjects.Num() == 0)
+        return 0;
 
     int32 SuccessCount = 0;
     int32 MaxAttempts = TargetCount * 30;
 
-    for (int32 Attempts = 0; Attempts < MaxAttempts && SuccessCount < TargetCount; Attempts++) {
-        const FScatteredInstanceInfo& TargetBuilding = AttachableObjects[FMath::RandRange(0, AttachableObjects.Num() - 1)];
+    for (int32 Attempts = 0; Attempts < MaxAttempts && SuccessCount < TargetCount; Attempts++)
+    {
+        const FScatteredInstanceInfo &TargetBuilding = AttachableObjects[FMath::RandRange(0, AttachableObjects.Num() - 1)];
 
         FVector AttachLocation;
-        if (!GenerateAttachedLocation(TargetBuilding, AttachLocation)) {
+        if (!GenerateAttachedLocation(TargetBuilding, AttachLocation))
+        {
             continue;
         }
 
-        if (LayerConfig.bUseCollisionDetection && CheckCollision(AttachLocation, LayerConfig.CollisionRadius * 0.5f, EScatterLevel::SmallObject)) {
+        if (LayerConfig.bUseCollisionDetection && CheckCollision(AttachLocation, LayerConfig.CollisionRadius * 0.5f, EScatterLevel::SmallObject))
+        {
             continue;
         }
 
-        UStaticMesh* SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
-        UMaterialInterface* SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
+        UStaticMesh *SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
+        UMaterialInterface *SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
 
-        UHierarchicalInstancedStaticMeshComponent* HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
+        UHierarchicalInstancedStaticMeshComponent *HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
 
         // 使用新函数获取实际的transform信息
         FTransform ActualTransform;
         int32 InstanceIndex = AddInstanceWithTransform(HISMC, AttachLocation, LayerConfig, ActualTransform);
 
-        if (InstanceIndex >= 0) {
+        if (InstanceIndex >= 0)
+        {
             FScatteredInstanceInfo InstanceInfo;
             InstanceInfo.InstanceIndex = InstanceIndex;
             InstanceInfo.Location = AttachLocation;
@@ -607,7 +667,7 @@ int32 ARandomScatterDA::ScatterAttachedSmallObjects(int32 TargetCount, const TAr
     return SuccessCount;
 }
 
-int32 ARandomScatterDA::ScatterRandomSmallObjects(const FVector& Min, const FVector& Max, int32 TargetCount, const TArray<UStaticMesh*>& StaticMeshes, const TArray<UMaterialInterface*>& Materials, const FLayerScatterConfig& LayerConfig)
+int32 ARandomScatterDA::ScatterRandomSmallObjects(const FVector &Min, const FVector &Max, int32 TargetCount, const TArray<UStaticMesh *> &StaticMeshes, const TArray<UMaterialInterface *> &Materials, const FLayerScatterConfig &LayerConfig)
 {
     TArray<FVector> Locations;
     FLayerScatterConfig TempConfig = LayerConfig;
@@ -615,27 +675,31 @@ int32 ARandomScatterDA::ScatterRandomSmallObjects(const FVector& Min, const FVec
     GenerateRandomLocations(Min, Max, TempConfig, Locations);
 
     int32 SuccessCount = 0;
-    for (int32 i = 0; i < FMath::Min(TargetCount, Locations.Num()); i++) {
+    for (int32 i = 0; i < FMath::Min(TargetCount, Locations.Num()); i++)
+    {
         FVector Location = Locations[i];
 
-        if (LayerConfig.bAlignToGround && !AlignToGround(Location, LayerConfig.GroundTraceDistance)) {
+        if (LayerConfig.bAlignToGround && !AlignToGround(Location, LayerConfig.GroundTraceDistance))
+        {
             continue;
         }
 
-        if (LayerConfig.bUseCollisionDetection && CheckCollision(Location, LayerConfig.CollisionRadius, EScatterLevel::SmallObject)) {
+        if (LayerConfig.bUseCollisionDetection && CheckCollision(Location, LayerConfig.CollisionRadius, EScatterLevel::SmallObject))
+        {
             continue;
         }
 
-        UStaticMesh* SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
-        UMaterialInterface* SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
+        UStaticMesh *SelectedMesh = StaticMeshes[FMath::RandRange(0, StaticMeshes.Num() - 1)];
+        UMaterialInterface *SelectedMaterial = Materials[FMath::RandRange(0, Materials.Num() - 1)];
 
-        UHierarchicalInstancedStaticMeshComponent* HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
+        UHierarchicalInstancedStaticMeshComponent *HISMC = GetOrCreateHISMC(SelectedMesh, SelectedMaterial);
 
         // 使用新函数获取实际的transform信息
         FTransform ActualTransform;
         int32 InstanceIndex = AddInstanceWithTransform(HISMC, Location, LayerConfig, ActualTransform);
 
-        if (InstanceIndex >= 0) {
+        if (InstanceIndex >= 0)
+        {
             FScatteredInstanceInfo InstanceInfo;
             InstanceInfo.InstanceIndex = InstanceIndex;
             InstanceInfo.Location = Location;
@@ -645,9 +709,9 @@ int32 ARandomScatterDA::ScatterRandomSmallObjects(const FVector& Min, const FVec
             // 记录实际的bounds、旋转和scale信息
             InstanceInfo.ActualBounds = GetActualMeshBounds(SelectedMesh, ActualTransform.GetScale3D());
             InstanceInfo.Rotation = ActualTransform.GetRotation().Rotator() + FRotator(
-                FMath::RandRange(-LayerConfig.RotationDelta.Pitch, LayerConfig.RotationDelta.Pitch),
-                FMath::RandRange(-LayerConfig.RotationDelta.Yaw, LayerConfig.RotationDelta.Yaw),
-                FMath::RandRange(-LayerConfig.RotationDelta.Roll, LayerConfig.RotationDelta.Roll));
+                                                                                  FMath::RandRange(-LayerConfig.RotationDelta.Pitch, LayerConfig.RotationDelta.Pitch),
+                                                                                  FMath::RandRange(-LayerConfig.RotationDelta.Yaw, LayerConfig.RotationDelta.Yaw),
+                                                                                  FMath::RandRange(-LayerConfig.RotationDelta.Roll, LayerConfig.RotationDelta.Roll));
             InstanceInfo.Scale = ActualTransform.GetScale3D();
 
             ScatteredInstances.SmallObjects.Add(InstanceInfo);
@@ -658,33 +722,39 @@ int32 ARandomScatterDA::ScatterRandomSmallObjects(const FVector& Min, const FVec
     return SuccessCount;
 }
 
-bool ARandomScatterDA::GenerateAttachedLocation(const FScatteredInstanceInfo& TargetBuilding, FVector& OutLocation) const
+bool ARandomScatterDA::GenerateAttachedLocation(const FScatteredInstanceInfo &TargetBuilding, FVector &OutLocation) const
 {
     FVector BuildingLocation = TargetBuilding.Location;
 
     bool bAttachToTop = FMath::RandRange(0.0f, 1.0f) < 0.3f;
     float SearchRadius = 200.0f;
 
-    if (bAttachToTop) {
+    if (bAttachToTop)
+    {
         OutLocation = FVector(
             BuildingLocation.X + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f),
             BuildingLocation.Y + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f),
             BuildingLocation.Z + FMath::RandRange(100.0f, 200.0f));
     }
-    else {
+    else
+    {
         float Side = FMath::RandRange(0.0f, 4.0f);
         float HeightRatio = FMath::RandRange(0.2f, 0.8f);
 
-        if (Side < 1.0f) {
+        if (Side < 1.0f)
+        {
             OutLocation = FVector(BuildingLocation.X + SearchRadius, BuildingLocation.Y + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f), BuildingLocation.Z + 100.0f * HeightRatio);
         }
-        else if (Side < 2.0f) {
+        else if (Side < 2.0f)
+        {
             OutLocation = FVector(BuildingLocation.X - SearchRadius, BuildingLocation.Y + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f), BuildingLocation.Z + 100.0f * HeightRatio);
         }
-        else if (Side < 3.0f) {
+        else if (Side < 3.0f)
+        {
             OutLocation = FVector(BuildingLocation.X + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f), BuildingLocation.Y + SearchRadius, BuildingLocation.Z + 100.0f * HeightRatio);
         }
-        else {
+        else
+        {
             OutLocation = FVector(BuildingLocation.X + FMath::RandRange(-SearchRadius * 0.5f, SearchRadius * 0.5f), BuildingLocation.Y - SearchRadius, BuildingLocation.Z + 100.0f * HeightRatio);
         }
     }
@@ -692,7 +762,7 @@ bool ARandomScatterDA::GenerateAttachedLocation(const FScatteredInstanceInfo& Ta
     return true;
 }
 
-void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& BuildingLocation, float Radius, float MinDistance, int32 TargetCount, TArray<FVector>& OutPoints) const
+void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector &BuildingLocation, float Radius, float MinDistance, int32 TargetCount, TArray<FVector> &OutPoints) const
 {
     OutPoints.Empty();
 
@@ -708,7 +778,8 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
     int32 InitialRingCount = 8;
     float InitialRadius = MinDistance * 1.5f;
 
-    for (int32 i = 0; i < InitialRingCount; i++) {
+    for (int32 i = 0; i < InitialRingCount; i++)
+    {
         float Angle = (2.0f * PI * i) / InitialRingCount;
         FVector InitialPoint = BuildingLocation + FVector(
                                                       InitialRadius * FMath::Cos(Angle),
@@ -716,14 +787,16 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
                                                       0.0f);
 
         // 检查是否在半径范围内
-        if (FVector::Dist2D(InitialPoint, BuildingLocation) <= Radius) {
+        if (FVector::Dist2D(InitialPoint, BuildingLocation) <= Radius)
+        {
             OutPoints.Add(InitialPoint);
             ActiveList.Add(InitialPoint);
 
             // 添加到网格
             int32 GridX = FMath::FloorToInt((InitialPoint.X - (BuildingLocation.X - Radius)) / CellSize);
             int32 GridY = FMath::FloorToInt((InitialPoint.Y - (BuildingLocation.Y - Radius)) / CellSize);
-            if (GridX >= 0 && GridX < GridWidth && GridY >= 0 && GridY < GridHeight) {
+            if (GridX >= 0 && GridX < GridWidth && GridY >= 0 && GridY < GridHeight)
+            {
                 Grid.Add(FIntPoint(GridX, GridY));
             }
         }
@@ -731,13 +804,15 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
 
     // 主采样循环
     int32 MaxAttempts = 30;
-    while (ActiveList.Num() > 0 && OutPoints.Num() < TargetCount) {
+    while (ActiveList.Num() > 0 && OutPoints.Num() < TargetCount)
+    {
         int32 RandomIndex = FMath::RandRange(0, ActiveList.Num() - 1);
         FVector CurrentPoint = ActiveList[RandomIndex];
 
         bool bFoundValidPoint = false;
 
-        for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++) {
+        for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
+        {
             // 在当前点周围生成候选点
             float Distance = FMath::RandRange(MinDistance, MinDistance * 2.0f);
             float Angle = FMath::RandRange(0.0f, 2.0f * PI);
@@ -748,7 +823,8 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
                                                         0.0f);
 
             // 检查是否在搜索半径内
-            if (FVector::Dist2D(CandidatePoint, BuildingLocation) > Radius) {
+            if (FVector::Dist2D(CandidatePoint, BuildingLocation) > Radius)
+            {
                 continue;
             }
 
@@ -756,34 +832,44 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
             int32 GridX = FMath::FloorToInt((CandidatePoint.X - (BuildingLocation.X - Radius)) / CellSize);
             int32 GridY = FMath::FloorToInt((CandidatePoint.Y - (BuildingLocation.Y - Radius)) / CellSize);
 
-            if (GridX < 0 || GridX >= GridWidth || GridY < 0 || GridY >= GridHeight) {
+            if (GridX < 0 || GridX >= GridWidth || GridY < 0 || GridY >= GridHeight)
+            {
                 continue;
             }
 
             // 检查附近是否有其他点
             bool bTooClose = false;
-            for (int32 CheckX = FMath::Max(0, GridX - 2); CheckX <= FMath::Min(GridWidth - 1, GridX + 2); CheckX++) {
-                for (int32 CheckY = FMath::Max(0, GridY - 2); CheckY <= FMath::Min(GridHeight - 1, GridY + 2); CheckY++) {
-                    if (Grid.Contains(FIntPoint(CheckX, CheckY))) {
+            for (int32 CheckX = FMath::Max(0, GridX - 2); CheckX <= FMath::Min(GridWidth - 1, GridX + 2); CheckX++)
+            {
+                for (int32 CheckY = FMath::Max(0, GridY - 2); CheckY <= FMath::Min(GridHeight - 1, GridY + 2); CheckY++)
+                {
+                    if (Grid.Contains(FIntPoint(CheckX, CheckY)))
+                    {
                         // 找到该网格中的点并检查距离
-                        for (const FVector& ExistingPoint : OutPoints) {
+                        for (const FVector &ExistingPoint : OutPoints)
+                        {
                             int32 ExistingGridX = FMath::FloorToInt((ExistingPoint.X - (BuildingLocation.X - Radius)) / CellSize);
                             int32 ExistingGridY = FMath::FloorToInt((ExistingPoint.Y - (BuildingLocation.Y - Radius)) / CellSize);
 
-                            if (ExistingGridX == CheckX && ExistingGridY == CheckY) {
-                                if (FVector::Dist2D(CandidatePoint, ExistingPoint) < MinDistance) {
+                            if (ExistingGridX == CheckX && ExistingGridY == CheckY)
+                            {
+                                if (FVector::Dist2D(CandidatePoint, ExistingPoint) < MinDistance)
+                                {
                                     bTooClose = true;
                                     break;
                                 }
                             }
                         }
-                        if (bTooClose) break;
+                        if (bTooClose)
+                            break;
                     }
                 }
-                if (bTooClose) break;
+                if (bTooClose)
+                    break;
             }
 
-            if (!bTooClose) {
+            if (!bTooClose)
+            {
                 OutPoints.Add(CandidatePoint);
                 ActiveList.Add(CandidatePoint);
                 Grid.Add(FIntPoint(GridX, GridY));
@@ -792,13 +878,15 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
             }
         }
 
-        if (!bFoundValidPoint) {
+        if (!bFoundValidPoint)
+        {
             ActiveList.RemoveAt(RandomIndex);
         }
     }
 
     // 如果点数不够，添加一些环形分布的点
-    while (OutPoints.Num() < TargetCount) {
+    while (OutPoints.Num() < TargetCount)
+    {
         float RingRadius = FMath::RandRange(MinDistance * 2.0f, Radius * 0.8f);
         float Angle = FMath::RandRange(0.0f, 2.0f * PI);
 
@@ -809,26 +897,31 @@ void ARandomScatterDA::GeneratePoissonPointsAroundBuilding(const FVector& Buildi
 
         // 检查与现有点的距离
         bool bValidRingPoint = true;
-        for (const FVector& ExistingPoint : OutPoints) {
-            if (FVector::Dist2D(RingPoint, ExistingPoint) < MinDistance * 0.8f) {
+        for (const FVector &ExistingPoint : OutPoints)
+        {
+            if (FVector::Dist2D(RingPoint, ExistingPoint) < MinDistance * 0.8f)
+            {
                 bValidRingPoint = false;
                 break;
             }
         }
 
-        if (bValidRingPoint) {
+        if (bValidRingPoint)
+        {
             OutPoints.Add(RingPoint);
         }
-        else {
+        else
+        {
             // 避免无限循环
             break;
         }
     }
 }
 
-FBox ARandomScatterDA::GetActualMeshBounds(UStaticMesh* Mesh, const FVector& Scale) const
+FBox ARandomScatterDA::GetActualMeshBounds(UStaticMesh *Mesh, const FVector &Scale) const
 {
-    if (!Mesh) {
+    if (!Mesh)
+    {
         return FBox(ForceInit);
     }
 
@@ -842,7 +935,7 @@ FBox ARandomScatterDA::GetActualMeshBounds(UStaticMesh* Mesh, const FVector& Sca
     return FBox(Min, Max);
 }
 
-int32 ARandomScatterDA::CalculateSubBuildingCount(const FScatteredInstanceInfo& MainBuilding, const FLayerScatterConfig& LayerConfig) const
+int32 ARandomScatterDA::CalculateSubBuildingCount(const FScatteredInstanceInfo &MainBuilding, const FLayerScatterConfig &LayerConfig) const
 {
     // 基础数量
     int32 BaseCount = LayerConfig.Num;
@@ -863,7 +956,7 @@ int32 ARandomScatterDA::CalculateSubBuildingCount(const FScatteredInstanceInfo& 
     return FMath::Clamp(AdjustedCount, 1, BaseCount * 3);
 }
 
-void ARandomScatterDA::GenerateBuildingClusters(const FVector& Min, const FVector& Max, const FLayerScatterConfig& LayerConfig, TArray<FVector>& OutLocations) const
+void ARandomScatterDA::GenerateBuildingClusters(const FVector &Min, const FVector &Max, const FLayerScatterConfig &LayerConfig, TArray<FVector> &OutLocations) const
 {
     OutLocations.Empty();
 
@@ -873,15 +966,17 @@ void ARandomScatterDA::GenerateBuildingClusters(const FVector& Min, const FVecto
     // 使用多个聚集核心点，每个核心点周围产生多个建筑
 
     // 确定聚集强度和聚集核心数量
-    int32 ClusterCoreCount = FMath::Max(3, LayerConfig.Num / 4); // 聚集核心数量
+    int32 ClusterCoreCount = FMath::Max(3, LayerConfig.Num / 4);                                            // 聚集核心数量
     float ClusterInfluenceRadius = FMath::Min(AreaSize.X, AreaSize.Y) * 0.15f * ClusterInfluenceRadiusBase; // 每个聚集核心的影响半径
 
     // 生成聚集核心点（这些不是建筑位置，而是吸引建筑的"磁场"中心）
     TArray<FVector> ClusterCores;
     TArray<float> ClusterStrengths; // 每个核心的聚集强度
 
-    for (int32 i = 0; i < ClusterCoreCount * 3; i++) {
-        if (ClusterCores.Num() >= ClusterCoreCount) break;
+    for (int32 i = 0; i < ClusterCoreCount * 3; i++)
+    {
+        if (ClusterCores.Num() >= ClusterCoreCount)
+            break;
 
         FVector CandidateCore = FVector(
             FMath::RandRange(Min.X, Max.X),
@@ -890,14 +985,17 @@ void ARandomScatterDA::GenerateBuildingClusters(const FVector& Min, const FVecto
 
         // 聚集核心之间保持一定距离
         bool bTooClose = false;
-        for (const FVector& ExistingCore : ClusterCores) {
-            if (FVector::Dist2D(CandidateCore, ExistingCore) < ClusterInfluenceRadius * 1.2f) {
+        for (const FVector &ExistingCore : ClusterCores)
+        {
+            if (FVector::Dist2D(CandidateCore, ExistingCore) < ClusterInfluenceRadius * 1.2f)
+            {
                 bTooClose = true;
                 break;
             }
         }
 
-        if (!bTooClose) {
+        if (!bTooClose)
+        {
             ClusterCores.Add(CandidateCore);
             // 随机聚集强度：有些核心吸引更多建筑，有些较少
             ClusterStrengths.Add(ClusterStrengthBase * FMath::RandRange(0.35f, 2.0f));
@@ -909,23 +1007,28 @@ void ARandomScatterDA::GenerateBuildingClusters(const FVector& Min, const FVecto
     // 现在直接生成所有建筑位置，每个位置受到所有聚集核心的影响
     int32 MaxAttempts = LayerConfig.Num * 10;
 
-    for (int32 Attempt = 0; Attempt < MaxAttempts && OutLocations.Num() < LayerConfig.Num; Attempt++) {
+    for (int32 Attempt = 0; Attempt < MaxAttempts && OutLocations.Num() < LayerConfig.Num; Attempt++)
+    {
         FVector CandidateLocation;
 
         // 基于聚集核心的概率密度采样
-        if (SampleLocationBasedOnClusterCores(Min, Max, ClusterCores, ClusterStrengths, ClusterInfluenceRadius, CandidateLocation)) {
+        if (SampleLocationBasedOnClusterCores(Min, Max, ClusterCores, ClusterStrengths, ClusterInfluenceRadius, CandidateLocation))
+        {
             // 简单的重叠检查，允许一定程度的重叠
             bool bAcceptable = true;
             float MinAllowedDistance = 30.0f; // 很小的距离，主要防止完全重合
 
-            for (const FVector& ExistingLocation : OutLocations) {
-                if (FVector::Dist2D(CandidateLocation, ExistingLocation) < MinAllowedDistance) {
+            for (const FVector &ExistingLocation : OutLocations)
+            {
+                if (FVector::Dist2D(CandidateLocation, ExistingLocation) < MinAllowedDistance)
+                {
                     bAcceptable = false;
                     break;
                 }
             }
 
-            if (bAcceptable) {
+            if (bAcceptable)
+            {
                 OutLocations.Add(CandidateLocation);
             }
         }
@@ -934,9 +1037,10 @@ void ARandomScatterDA::GenerateBuildingClusters(const FVector& Min, const FVecto
     UE_LOG(LogTemp, Warning, TEXT("建筑聚集采样完成：生成 %d 个建筑位置"), OutLocations.Num());
 }
 
-bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, const FVector& Max, const TArray<FVector>& ClusterCores, const TArray<float>& ClusterStrengths, float InfluenceRadius, FVector& OutLocation) const
+bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector &Min, const FVector &Max, const TArray<FVector> &ClusterCores, const TArray<float> &ClusterStrengths, float InfluenceRadius, FVector &OutLocation) const
 {
-    if (ClusterCores.Num() == 0) {
+    if (ClusterCores.Num() == 0)
+    {
         // 如果没有聚集核心，就随机采样
         OutLocation = FVector(
             FMath::RandRange(Min.X, Max.X),
@@ -949,7 +1053,8 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
     // 首先选择一个聚集核心（基于强度的权重选择）
 
     float TotalWeight = 0.0f;
-    for (float Strength : ClusterStrengths) {
+    for (float Strength : ClusterStrengths)
+    {
         TotalWeight += Strength;
     }
 
@@ -957,15 +1062,17 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
     int32 SelectedCoreIndex = 0;
     float AccumulatedWeight = 0.0f;
 
-    for (int32 i = 0; i < ClusterCores.Num(); i++) {
+    for (int32 i = 0; i < ClusterCores.Num(); i++)
+    {
         AccumulatedWeight += ClusterStrengths[i];
-        if (RandomWeight <= AccumulatedWeight) {
+        if (RandomWeight <= AccumulatedWeight)
+        {
             SelectedCoreIndex = i;
             break;
         }
     }
 
-    const FVector& SelectedCore = ClusterCores[SelectedCoreIndex];
+    const FVector &SelectedCore = ClusterCores[SelectedCoreIndex];
     float SelectedStrength = ClusterStrengths[SelectedCoreIndex];
 
     // 在选定的聚集核心周围采样
@@ -973,7 +1080,8 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
 
     float SamplingType = FMath::RandRange(0.0f, 1.0f);
 
-    if (SamplingType < 0.6f) {
+    if (SamplingType < 0.6f)
+    {
         // 60%概率：高斯分布采样（紧密聚集）
         float GaussianDistance = FMath::Abs(GenerateGaussianRandom()) * InfluenceRadius * SelectedStrength * 0.4f;
         GaussianDistance = FMath::Min(GaussianDistance, InfluenceRadius * SelectedStrength);
@@ -985,7 +1093,8 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
                                          GaussianDistance * FMath::Sin(Angle),
                                          0.0f);
     }
-    else if (SamplingType < 0.85f) {
+    else if (SamplingType < 0.85f)
+    {
         // 25%概率：均匀圆形分布
         float Distance = FMath::RandRange(0.0f, InfluenceRadius * SelectedStrength * 0.7f);
         float Angle = FMath::RandRange(0.0f, 2.0f * PI);
@@ -995,22 +1104,26 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
                                          Distance * FMath::Sin(Angle),
                                          0.0f);
     }
-    else {
+    else
+    {
         // 15%概率：多核心影响的混合采样
         // 同时受到多个核心的影响
         FVector WeightedPosition = FVector::ZeroVector;
         float TotalInfluence = 0.0f;
 
-        for (int32 i = 0; i < ClusterCores.Num(); i++) {
+        for (int32 i = 0; i < ClusterCores.Num(); i++)
+        {
             float Distance = FVector::Dist2D(SelectedCore, ClusterCores[i]);
-            if (Distance < InfluenceRadius * 2.0f) {
+            if (Distance < InfluenceRadius * 2.0f)
+            {
                 float Influence = ClusterStrengths[i] / FMath::Max(1.0f, Distance * 0.01f);
                 WeightedPosition += ClusterCores[i] * Influence;
                 TotalInfluence += Influence;
             }
         }
 
-        if (TotalInfluence > 0.0f) {
+        if (TotalInfluence > 0.0f)
+        {
             FVector CenterOfInfluence = WeightedPosition / TotalInfluence;
 
             // 在影响中心周围采样
@@ -1022,7 +1135,8 @@ bool ARandomScatterDA::SampleLocationBasedOnClusterCores(const FVector& Min, con
                                                   Distance * FMath::Sin(Angle),
                                                   0.0f);
         }
-        else {
+        else
+        {
             // 回退到简单的高斯采样
             float Distance = FMath::Abs(GenerateGaussianRandom()) * InfluenceRadius * 0.3f;
             float Angle = FMath::RandRange(0.0f, 2.0f * PI);
@@ -1048,7 +1162,8 @@ float ARandomScatterDA::GenerateGaussianRandom() const
     static bool bHasSpare = false;
     static float SpareValue = 0.0f;
 
-    if (bHasSpare) {
+    if (bHasSpare)
+    {
         bHasSpare = false;
         return SpareValue;
     }
@@ -1059,7 +1174,8 @@ float ARandomScatterDA::GenerateGaussianRandom() const
     float V = FMath::RandRange(0.0f, 1.0f);
 
     // 避免U为0导致log(0)的问题
-    while (U <= 0.0f) {
+    while (U <= 0.0f)
+    {
         U = FMath::RandRange(0.0f, 1.0f);
     }
 
