@@ -23,11 +23,16 @@ public class EnhancedEditor : ModuleRules
             {
                 "CoreUObject",
                 "Engine",
+                "InputCore",
                 "Slate",
                 "SlateCore",
+                "AppFramework",
                 "EditorScriptingUtilities",
                 "UnrealEd",
                 "AssetRegistry",
+                "AssetTools",
+                "ContentBrowser",
+                "EditorStyle",
                 "Blutility",
             }
         );

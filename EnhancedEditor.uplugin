@@ -23,7 +23,7 @@
 		{
 			"Name": "EnhancedEditor",
 			"Type": "Editor",
-			"LoadingPhase": "PreDefault"
+			"LoadingPhase": "Default"
 		}
 	]
 }
